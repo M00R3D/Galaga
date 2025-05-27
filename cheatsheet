@@ -1,0 +1,130 @@
+//ESTRUCTURA BÁSICA
+function setup() {
+  createCanvas(400, 400); // Crea un lienzo de 400x400
+}
+
+function draw() {
+  background(220); // Color de fondo (gris claro)
+}
+
+//COLORES
+background(255);         // Fondo blanco
+fill(255, 0, 0);         // Color de relleno rojo
+stroke(0);               // Color del borde negro
+noFill();                // Sin relleno
+noStroke();              // Sin borde
+
+//FORMAS BÁSICAS
+rect(10, 10, 100, 50);         // Rectángulo
+ellipse(200, 200, 80, 80);     // Elipse / círculo
+line(0, 0, 400, 400);          // Línea diagonal
+triangle(30, 75, 58, 20, 86, 75); // Triángulo
+point(300, 300);               // Punto
+
+//TRANSFORMACIONES
+push();
+translate(50, 50);             // Mueve coordenadas
+rotate(PI / 4);                // Rota 45 grados
+scale(2);                      // Escala al doble
+rect(0, 0, 50, 50);
+pop();                         // Restaura estado original
+
+//INTERACCIÓN
+// Variables del mouse y teclado:
+console.log(mouseX, mouseY);   // Posición del mouse
+console.log(mouseIsPressed);   // Mouse presionado
+console.log(key);              // Tecla presionada
+console.log(keyCode);          // Código de tecla
+
+// Eventos:
+function mousePressed() {
+  console.log("Mouse presionado");
+}
+
+function keyPressed() {
+  console.log("Tecla presionada: " + key);
+}
+
+function mouseMoved() {
+  // Se ejecuta al mover el mouse
+}
+
+function keyReleased() {
+  // Se ejecuta al soltar una tecla
+}
+
+//CONTROL DE FLUJO
+noLoop();                      // Detiene draw()
+loop();                        // Reanuda draw()
+frameRate(30);                 // Establece FPS
+
+//TEXTO
+textSize(32);
+fill(0);
+textAlign(CENTER, CENTER);     // Centrado horizontal y vertical
+text("Hola, mundo", width/2, height/2);
+
+//ALEATORIEDAD
+let r = random(100);           // Número entre 0 y 100
+let r2 = random(50, 150);      // Entre 50 y 150
+let r3 = random([10, 20, 30]); // De un array
+
+//VARIABLES ÚTILES
+console.log(width, height);    // Dimensiones del canvas
+console.log(frameCount);       // Número de frames
+
+//IMÁGENES Y MULTIMEDIA
+let img;
+function preload() {
+  img = loadImage('ruta.jpg');
+}
+function setup() {
+  createCanvas(400, 400);
+  image(img, 0, 0, 200, 200); // Dibuja imagen
+}
+
+let sound;
+function preload() {
+  sound = loadSound('audio.mp3');
+}
+function draw() {
+  if (!sound.isPlaying()) {
+    sound.play();
+  }
+}
+
+// FORMAS AVANZADAS
+beginShape();
+vertex(30, 20);
+vertex(85, 20);
+vertex(85, 75);
+vertex(30, 75);
+endShape(CLOSE); // Termina la forma
+
+let val = map(25, 0, 100, 0, 255); // Remapea valor
+let limitado = constrain(300, 0, 255); // Limita valor
+let distancia = dist(0, 0, 100, 100);  // Distancia entre 2 puntos
+
+//CLASES
+class Bola {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  mover() {
+    this.x += random(-2, 2);
+    this.y += random(-2, 2);
+  }
+
+  mostrar() {
+    ellipse(this.x, this.y, 20, 20);
+  }
+}
+
+let bola = new Bola(200, 200);
+function draw() {
+  background(255);
+  bola.mover();
+  bola.mostrar();
+}
