@@ -1,32 +1,40 @@
 let nave;
+let imgNave;
+
 
 function setup()
 {
     createCanvas(1240, 760);
-    let naveX = width / 2;
-    let naveY = height - 22;
-    let naveW = 60;
-    let naveH = 30;
-    nave = new Nave(naveX, naveY, naveW, naveH);
+    loadImage('recursos/nave.png', function(img) {
+    imgNave = img;
+    nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
+  }, 
+ 
+  function() {
+    console.error('Error: No se pudo cargar la imagen.');
+  });
 }
 
 
 function draw() 
 {
     background(5, 0, 14);
-    nave.mover();
-    nave.mostrar();
+    if (nave) {
+        nave.mover();
+        nave.mostrar();
+    }
     
 }
 
 class Nave 
 {
-    constructor(x, y, w, h) 
+    constructor(x, y, w, h, img) 
         {
             this.x = x;
             this.y = y;
             this.w = w;
             this.h = h;
+            this.img = img;
         }
 
         mover() 
@@ -47,6 +55,6 @@ class Nave
 
         mostrar() 
         {
-            ellipse(this.x, this.y, this.w, this.h);
+            image(this.img, this.x, this.y, this.w, this.h);
         }
 }
