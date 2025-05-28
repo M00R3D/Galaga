@@ -8,6 +8,9 @@ let proyectiles = [];
 
 let enemigos = [];
 let enemigosSpawneados = 0;
+let enemigoImgs = [];
+let frameEnemigo = 0;
+let cEnemigo = 6;
 let juegoTerminado = false;
 
 let puntaje = 0;
@@ -19,8 +22,11 @@ async function setup() {
     proyectilImgs[0] = await loadImageAsync('recursos/proyectil1.png');
     proyectilImgs[1] = await loadImageAsync('recursos/proyectil2.png');
     proyectilImgs[2] = await loadImageAsync('recursos/proyectil3.png');
+    enemigoImgs[0] = await loadImageAsync('recursos/enemigo1.png');
+    enemigoImgs[1] = await loadImageAsync('recursos/enemigo2.png');
+    enemigoImgs[2] = await loadImageAsync('recursos/enemigo3.png');
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
-    enemigos.push(new Enemigo(random(50, width - 50), -40, 20));
+    enemigos.push(new Enemigo(random(50, width - 50), -40, 40));
 }
 
 function draw() {
@@ -56,6 +62,12 @@ function draw() {
             nave.img = imgNave;
         }
     }
+    if (cEnemigo > 0) {
+        cEnemigo--;
+    } else {
+        cEnemigo = 6;
+        frameEnemigo = (frameEnemigo + 1) % enemigoImgs.length;
+    }
 
     for (let i = proyectiles.length - 1; i >= 0; i--) {
         proyectiles[i].mover();
@@ -84,7 +96,7 @@ function draw() {
     }
 
     if (frameCount % 120 === 0 && enemigosSpawneados<9) {
-        enemigos.push(new Enemigo(random(50, width - 50), -40, 20));
+        enemigos.push(new Enemigo(random(50, width - 50), -40, 40));
         enemigosSpawneados++;
     }
 }
@@ -149,6 +161,7 @@ class Enemigo {
         this.y = y;
         this.r = r;
         this.vel = 1;
+        this.imgs = enemigoImgs;
     }
 
     mover() {
@@ -156,9 +169,7 @@ class Enemigo {
     }
 
     mostrar() {
-        fill(255, 0, 0);
-        noStroke();
-        circle(this.x, this.y, this.r * 2);
+        image(this.imgs[frameEnemigo], this.x - this.r, this.y - this.r, this.r * 2, this.r * 2);
     }
 
     colisionaConNave(nave) {
