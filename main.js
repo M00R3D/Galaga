@@ -6,6 +6,9 @@ let frameNave = 0;
 let proyectilImgs = [];
 let proyectiles = [];
 
+let enemigos = [];
+let juegoTerminado = false;
+
 async function setup() {
     createCanvas(1240, 760);
     imgNave = await loadImageAsync('recursos/nave1.png');
@@ -14,10 +17,19 @@ async function setup() {
     proyectilImgs[1] = await loadImageAsync('recursos/proyectil2.png');
     proyectilImgs[2] = await loadImageAsync('recursos/proyectil3.png');
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
+    enemigos.push(new Enemigo(random(50, width - 50), -40, 20));
 }
 
 function draw() {
     background(5, 0, 14);
+
+    if (juegoTerminado) {
+        fill(255, 0, 0);
+        textSize(64);
+        textAlign(CENTER, CENTER);
+        text("Juego Terminado", width / 2, height / 2);
+        return;
+    }
 
     if (nave) {
         nave.mover();
@@ -44,6 +56,27 @@ function draw() {
             proyectiles.splice(i, 1);
         }
     }
+
+    for (let i = enemigos.length - 1; i >= 0; i--) {
+        enemigos[i].mover();
+        enemigos[i].mostrar();
+
+        if (nave && enemigos[i].colisionaConNave(nave)) {
+            juegoTerminado = true;
+        }
+
+        for (let j = proyectiles.length - 1; j >= 0; j--) {
+            if (enemigos[i].colisionaConProyectil(proyectiles[j])) {
+                enemigos.splice(i, 1);
+                proyectiles.splice(j, 1);
+                break;
+            }
+        }
+    }
+
+    // if (frameCount % 120 === 0) {
+    //     enemigos.push(new Enemigo(random(50, width - 50), -40, 20));
+    // }
 }
 
 function keyPressed() {
@@ -100,17 +133,38 @@ class Proyectil {
     }
 }
 
-function loadImageAsync(path) {
-    return new Promise((resolve, reject) => {
-        loadImage(path, resolve, reject);
-    });
+class Enemigo {
+    constructor(x, y, r) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+        this.vel = 1;
+    }
+
+    mover() {
+        this.y += this.vel;
+    }
+
+    mostrar() {
+        fill(255, 0, 0);
+        noStroke();
+        circle(this.x, this.y, this.r * 2);
+    }
+
+    colisionaConNave(nave) {
+        let dx = this.x - (nave.x + nave.w / 2);
+        let dy = this.y - (nave.y + nave.h / 2);
+        let distancia = sqrt(dx * dx + dy * dy);
+        return distancia < this.r + max(nave.w, nave.h) / 2;
+    }
+
+    colisionaConProyectil(proyectil) {
+        let dx = this.x - (proyectil.x + proyectil.w / 2);
+        let dy = this.y - (proyectil.y + proyectil.h / 2);
+        let distancia = sqrt(dx * dx + dy * dy);
+        return distancia < this.r + max(proyectil.w, proyectil.h) / 2;
+    }
 }
-
-
-
-
-
-
 
 function loadImageAsync(path) {
     return new Promise((resolve, reject) => {
