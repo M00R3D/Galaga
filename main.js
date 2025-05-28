@@ -115,7 +115,7 @@ function keyPressed() {
         proyectiles.push(nuevo);
     }
     console.log("key:", key, "keyCode:", keyCode);
-    if ((key === 'r' || key === 'R')) {
+    if ((key === 'r' || key === 'R')&& juegoTerminado == true) {
         console.log("Reiniciando por tecla R");
         reiniciarJuego();
     }
