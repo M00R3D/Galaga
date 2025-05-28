@@ -14,6 +14,7 @@ let cEnemigo = 6;
 let juegoTerminado = false;
 
 let puntaje = 0;
+let vidas = 3;
 
 async function setup() {
     createCanvas(1240, 760);
@@ -44,6 +45,7 @@ function draw() {
     textSize(32);
     textAlign(LEFT, TOP);
     text("Puntaje: " + puntaje, 20, 20);
+    text("Vidas: " + vidas, 20, 60);
 
     if (nave) {
         nave.mover();
@@ -82,7 +84,13 @@ function draw() {
         enemigos[i].mostrar();
 
         if (nave && enemigos[i].colisionaConNave(nave)) {
-            juegoTerminado = true;
+            enemigos.splice(i, 1);
+            vidas--;
+            if (vidas <= 0) {
+                juegoTerminado = true;
+            }
+            continue;
+        
         }
 
         for (let j = proyectiles.length - 1; j >= 0; j--) {
@@ -106,8 +114,23 @@ function keyPressed() {
         let nuevo = new Proyectil(nave.x + nave.w / 2 - 10, nave.y);
         proyectiles.push(nuevo);
     }
+    console.log("key:", key, "keyCode:", keyCode);
+    if ((key === 'r' || key === 'R')) {
+        console.log("Reiniciando por tecla R");
+        reiniciarJuego();
+    }
 }
-
+function reiniciarJuego() {
+    console.log("Reiniciando juego...");
+    puntaje = 0;
+    vidas = 3;
+    enemigos = [];
+    proyectiles = [];
+    enemigosSpawneados = 0;
+    juegoTerminado = false;
+    nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
+    enemigos.push(new Enemigo(random(50, width - 50), -40, 20));
+}
 class Nave {
     constructor(x, y, w, h, img) {
         this.x = x;
@@ -191,4 +214,16 @@ function loadImageAsync(path) {
     return new Promise((resolve, reject) => {
         loadImage(path, resolve, reject);
     });
+}
+
+function reiniciarJuego() {
+    console.log("Reiniciando juego...");
+    puntaje = 0;
+    vidas = 3;
+    enemigos = [];
+    proyectiles = [];
+    enemigosSpawneados = 0;
+    juegoTerminado = false;
+    nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
+    enemigos.push(new Enemigo(random(50, width - 50), -40, 20));
 }
