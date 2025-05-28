@@ -7,6 +7,7 @@ let proyectilImgs = [];
 let proyectiles = [];
 
 let enemigos = [];
+let enemigosSpawneados = 0;
 let juegoTerminado = false;
 
 let puntaje = 0;
@@ -82,8 +83,9 @@ function draw() {
         }
     }
 
-    if (frameCount % 120 === 0 && enemigos.length<10) {
+    if (frameCount % 120 === 0 && enemigosSpawneados<9) {
         enemigos.push(new Enemigo(random(50, width - 50), -40, 20));
+        enemigosSpawneados++;
     }
 }
 
