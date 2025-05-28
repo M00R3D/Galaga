@@ -9,6 +9,8 @@ let proyectiles = [];
 let enemigos = [];
 let juegoTerminado = false;
 
+let puntaje = 0;
+
 async function setup() {
     createCanvas(1240, 760);
     imgNave = await loadImageAsync('recursos/nave1.png');
@@ -30,6 +32,11 @@ function draw() {
         text("Juego Terminado", width / 2, height / 2);
         return;
     }
+
+    fill(255);
+    textSize(32);
+    textAlign(LEFT, TOP);
+    text("Puntaje: " + puntaje, 20, 20);
 
     if (nave) {
         nave.mover();
@@ -69,14 +76,15 @@ function draw() {
             if (enemigos[i].colisionaConProyectil(proyectiles[j])) {
                 enemigos.splice(i, 1);
                 proyectiles.splice(j, 1);
+                puntaje++;
                 break;
             }
         }
     }
 
-    // if (frameCount % 120 === 0) {
-    //     enemigos.push(new Enemigo(random(50, width - 50), -40, 20));
-    // }
+    if (frameCount % 120 === 0 && enemigos.length<10) {
+        enemigos.push(new Enemigo(random(50, width - 50), -40, 20));
+    }
 }
 
 function keyPressed() {
@@ -109,11 +117,11 @@ class Nave {
 
 class Proyectil {
     constructor(x, y) {
-        this.x = x;
+        this.x = x-10;
         this.y = y;
         this.vel = 7;
-        this.w = 20;
-        this.h = 40;
+        this.w = 40;
+        this.h = 80;
         this.frame = 0;
         this.c = 4;
     }
