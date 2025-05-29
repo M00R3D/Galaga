@@ -51,7 +51,9 @@ function draw() {
         nave.mover();
         nave.mostrar();
     }
-
+    if (vidas <= 0) {
+                    juegoTerminado = true;
+                }
     if (c > 0) {
         c--;
     } else {
@@ -82,6 +84,12 @@ function draw() {
     for (let i = enemigos.length - 1; i >= 0; i--) {
         enemigos[i].mover();
         enemigos[i].mostrar();
+        // Destruir si llega al fondo
+        if (enemigos[i].colisionaConFondo()) {
+            enemigos.splice(i, 1);
+            vidas--;
+            continue;
+        }
 
         if (nave && enemigos[i].colisionaConNave(nave)) {
             enemigos.splice(i, 1);
@@ -102,6 +110,8 @@ function draw() {
             }
         }
     }
+
+    
 
     if (frameCount % 120 === 0 && enemigosSpawneados<9) {
         enemigos.push(new Enemigo(random(50, width - 50), -40, 40));
@@ -129,7 +139,6 @@ function reiniciarJuego() {
     enemigosSpawneados = 0;
     juegoTerminado = false;
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
-    enemigos.push(new Enemigo(random(50, width - 50), -40, 20));
 }
 class Nave {
     constructor(x, y, w, h, img) {
@@ -207,6 +216,10 @@ class Enemigo {
         let dy = this.y - (proyectil.y + proyectil.h / 2);
         let distancia = sqrt(dx * dx + dy * dy);
         return distancia < this.r + max(proyectil.w, proyectil.h) / 2;
+    }
+    
+    colisionaConFondo() {
+        return (this.y>760);
     }
 }
 
