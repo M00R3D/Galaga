@@ -18,6 +18,9 @@ let vidas = 3;
 let nivel = 1;
 let estrellas = [];
 let numEstrellas=200;
+let enTransicion = false;
+let tiempoTransicion = 0;
+let duracionTransicion = 120;
 
 async function setup() {
     createCanvas(1240, 760);
@@ -45,6 +48,23 @@ async function setup() {
 function draw() {
     background(5, 0, 14);
     fondoEstrellado();
+
+    if (enTransicion) {
+        fill(255);
+        textSize(48);
+        textAlign(CENTER, CENTER);
+        text("Nivel " + nivel, width / 2, height / 2);
+
+        tiempoTransicion--;
+        if (tiempoTransicion <= 0) {
+            enTransicion = false;
+            formacionCompletada = false;
+            ataqueIniciado = false;
+            tiempoParaAtaque = millis() + random(5000, 30000);
+            generarFormacion();
+        }
+    return;
+}
     if (juegoTerminado) {
         fill(255, 0, 0);
         textSize(64);
@@ -128,11 +148,16 @@ function draw() {
                 enemigos.splice(i, 1);
                 proyectiles.splice(j, 1);
                 puntaje++;
-                if (puntaje % 10 === 0) nivel++;
                 break;
             }
         }
     }
+    if (enemigos.length === 0 && !enTransicion) {
+        nivel++;
+        enTransicion = true;
+        tiempoTransicion = duracionTransicion;
+    }
+
 }
 
 function keyPressed() {
