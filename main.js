@@ -16,6 +16,8 @@ let juegoTerminado = false;
 let puntaje = 0;
 let vidas = 3;
 let nivel = 1;
+let estrellas = [];
+let numEstrellas=200;
 
 async function setup() {
     createCanvas(1240, 760);
@@ -30,10 +32,19 @@ async function setup() {
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
     generarFormacion();
     tiempoParaAtaque = millis() + random(5000, 30000);
+        for (let i = 0; i < numEstrellas; i++) {
+        estrellas.push({
+            x: random(width),
+            y: random(height),
+            r: random(1, 3),
+            velocidad: random(0.5, 2)
+        });
+    }
 }
 
 function draw() {
     background(5, 0, 14);
+    fondoEstrellado();
     if (juegoTerminado) {
         fill(255, 0, 0);
         textSize(64);
@@ -130,6 +141,20 @@ function keyPressed() {
         proyectiles.push(nuevo);
     }
     if ((key === 'r' || key === 'R') && juegoTerminado) reiniciarJuego();
+}
+
+function fondoEstrellado() {
+    noStroke();
+    fill(255);
+    for (let estrella of estrellas) {
+        circle(estrella.x, estrella.y, estrella.r);
+        estrella.y += estrella.velocidad;
+
+        if (estrella.y > height) {
+            estrella.y = 0;
+            estrella.x = random(width);
+        }
+    }
 }
 
 function reiniciarJuego() {
