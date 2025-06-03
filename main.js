@@ -28,6 +28,7 @@ let intervaloAtaque = 600;
 let explosiones = [];
 let naveDesaparecida = false;
 let tiempoRespawn = 0;
+let proyectilesEnemigo = []
 
 async function setup() {
     createCanvas(1240, 760);
@@ -195,6 +196,28 @@ function draw() {
         explosiones[i].mostrar();
         if (explosiones[i].terminada()) explosiones.splice(i, 1);
     }
+     if (nivel === 2 && formacionCompletada) {
+        for (let e of enemigos) {
+            if (random() < 0.004) {
+                proyectilesEnemigo.push(new ProyectilEnemigo(e.x, e.y + e.r));
+            }
+        }
+    }
+
+    for (let i = proyectilesEnemigo.length - 1; i >= 0; i--) {
+        let pe = proyectilesEnemigo[i];
+        pe.mover();
+        pe.mostrar();
+        if (pe.y > height) {
+            proyectilesEnemigo.splice(i, 1);
+            continue;
+        }
+        if (nave && pe.colisionaConNave(nave)) {
+            proyectilesEnemigo.splice(i, 1);
+            vidas--;
+            if (vidas <= 0) juegoTerminado = true;
+        }
+    }
 }
 
 function keyPressed() {
@@ -260,8 +283,8 @@ class Nave {
 
     mover() {
         if (keyIsDown('a') && keyIsDown('d')) return;
-        if (keyIsDown('a')) this.x -= 7;
-        else if (keyIsDown('d')) this.x += 7;
+        if (keyIsDown('a')) this.x -= 10;
+        else if (keyIsDown('d')) this.x += 10;
         this.x = constrain(this.x, 0, width - this.w);
     }
 
@@ -274,7 +297,7 @@ class Proyectil {
     constructor(x, y) {
         this.x = x - 10;
         this.y = y;
-        this.vel = 7;
+        this.vel = 20;
         this.w = 40;
         this.h = 80;
         this.frame = 0;
@@ -294,7 +317,31 @@ class Proyectil {
         image(proyectilImgs[this.frame], this.x, this.y, this.w, this.h);
     }
 }
+class ProyectilEnemigo {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vel = 5;
+        this.w = 20;
+        this.h = 40;
+    }
 
+    mover() {
+        this.y += this.vel;
+    }
+    mostrar() {
+         fill(255, 100, 100);
+        noStroke();
+        rect(this.x, this.y, this.w, this.h);
+    }
+
+    colisionaConNave(nave) {
+        return (this.x < nave.x + nave.w &&
+                this.x + this.w > nave.x &&
+                this.y < nave.y + nave.h &&
+                this.y + this.h > nave.y);
+    }
+}
 class Enemigo {
     constructor(x, y, r, xObjetivo, yObjetivo) {
         this.x = x;
