@@ -24,7 +24,10 @@ let duracionTransicion = 120;
 let enemigosAtacando = [];
 let indiceAtaque = 0;
 let tiempoUltimoAtaque = 0;
-let intervaloAtaque = 600; // milisegundos
+let intervaloAtaque = 600;
+let explosiones = [];
+let naveDesaparecida = false;
+let tiempoRespawn = 0;
 
 async function setup() {
     createCanvas(1240, 760);
@@ -85,18 +88,19 @@ function draw() {
     text("Vidas: " + vidas, 20, 60);
     text("nivel:" + nivel, 20, 100);
 
-    if (nave) {
+    if (!naveDesaparecida && nave) {
         nave.mover();
         nave.mostrar();
+    } else if (millis() > tiempoRespawn && vidas > 0) {
+        naveDesaparecida = false;
+        nave = new Nave(-100, height - 100, 60, 64, imgNave);
     }
-
-    if (vidas <= 0) juegoTerminado = true;
 
     if (c > 0) c--;
     else {
         c = 6;
         frameNave = 1 - frameNave;
-        nave.img = frameNave === 0 ? imgNave : imgNave2;
+        if (nave) nave.img = frameNave === 0 ? imgNave : imgNave2;
     }
 
     if (cEnemigo > 0) cEnemigo--;
@@ -127,30 +131,22 @@ function draw() {
         if (ataqueIniciado && millis() - tiempoUltimoAtaque >= intervaloAtaque) {
             if (indiceAtaque < enemigosAtacando.length) {
                 let enemigo = enemigosAtacando[indiceAtaque];
-
-                // Solo enemigos de la fila inferior (yObjetivo más alto)
                 let maxY = Math.max(...enemigos.map(e => e.yObjetivo));
                 if (enemigo.yObjetivo === maxY) {
                     enemigo.atacando = true;
-
-                    // Dirección fija al momento de atacar
                     let dx = nave.x + nave.w / 2 - enemigo.x;
                     let dy = nave.y + nave.h / 2 - enemigo.y;
                     let ang = atan2(dy, dx);
                     enemigo.dx = cos(ang) * 4.5;
                     enemigo.dy = sin(ang) * 4.5;
                 }
-
                 indiceAtaque++;
                 tiempoUltimoAtaque = millis();
-
-                // Reducir el intervalo cada vez
                 let secuencia = [10000, 8000, 6000, 4000, 2000, 1000];
                 let idx = Math.min(indiceAtaque, secuencia.length - 1);
                 intervaloAtaque = secuencia[idx];
             }
         }
-
     }
 
     for (let i = enemigos.length - 1; i >= 0; i--) {
@@ -158,7 +154,6 @@ function draw() {
         if (!formacionCompletada) enemigo.moverHaciaFormacion();
         else if (enemigo.atacando) enemigo.atacar();
         else enemigo.y += 0.2;
-
         enemigo.mostrar();
 
         if (enemigo.colisionaConFondo()) {
@@ -167,15 +162,20 @@ function draw() {
             continue;
         }
 
-        if (nave && enemigo.colisionaConNave(nave)) {
+        if (!naveDesaparecida && nave && enemigo.colisionaConNave(nave)) {
+            crearExplosion(nave.x + nave.w / 2, nave.y + nave.h / 2);
             enemigos.splice(i, 1);
             vidas--;
+            naveDesaparecida = true;
+            tiempoRespawn = millis() + 2000;
+            nave = null;
             if (vidas <= 0) juegoTerminado = true;
             continue;
         }
 
         for (let j = proyectiles.length - 1; j >= 0; j--) {
             if (enemigo.colisionaConProyectil(proyectiles[j])) {
+                crearExplosion(enemigo.x, enemigo.y);
                 enemigos.splice(i, 1);
                 proyectiles.splice(j, 1);
                 puntaje++;
@@ -189,10 +189,16 @@ function draw() {
         enTransicion = true;
         tiempoTransicion = duracionTransicion;
     }
+
+    for (let i = explosiones.length - 1; i >= 0; i--) {
+        explosiones[i].actualizar();
+        explosiones[i].mostrar();
+        if (explosiones[i].terminada()) explosiones.splice(i, 1);
+    }
 }
 
 function keyPressed() {
-    if (key === ' ') {
+    if (key === ' ' && nave && !naveDesaparecida) {
         let nuevo = new Proyectil(nave.x + nave.w / 2 - 10, nave.y);
         proyectiles.push(nuevo);
     }
@@ -312,30 +318,76 @@ class Enemigo {
         this.y += this.dy;
     }
 
-
     mostrar() {
         image(this.imgs[frameEnemigo], this.x - this.r, this.y - this.r, this.r * 2, this.r * 2);
     }
 
-    colisionaConNave(nave) {
-        let dx = this.x - (nave.x + nave.w / 2);
-        let dy = this.y - (nave.y + nave.h / 2);
-        return sqrt(dx * dx + dy * dy) < this.r + max(nave.w, nave.h) / 2;
-    }
-
-    colisionaConProyectil(proyectil) {
-        let dx = this.x - (proyectil.x + proyectil.w / 2);
-        let dy = this.y - (proyectil.y + proyectil.h / 2);
-        return sqrt(dx * dx + dy * dy) < this.r + max(proyectil.w, proyectil.h) / 2;
-    }
-
     colisionaConFondo() {
-        return this.y > 760;
+        return this.y > height;
+    }
+
+    colisionaConNave(n) {
+        return this.x + this.r > n.x && this.x - this.r < n.x + n.w &&
+               this.y + this.r > n.y && this.y - this.r < n.y + n.h;
+    }
+
+    colisionaConProyectil(p) {
+        return this.x + this.r > p.x && this.x - this.r < p.x + p.w &&
+               this.y + this.r > p.y && this.y - this.r < p.y + p.h;
     }
 }
 
-function loadImageAsync(path) {
-    return new Promise((resolve, reject) => {
-        loadImage(path, resolve, reject);
-    });
+class Particula {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = random(-3, 3);
+        this.vy = random(-3, 3);
+        this.life = 60;
+        this.color = color(random([255, 255, 255]), random([0, 150, 255]), 0);
+    }
+
+    actualizar() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life--;
+    }
+
+    mostrar() {
+        noStroke();
+        fill(this.color);
+        circle(this.x, this.y, 5);
+    }
+
+    terminada() {
+        return this.life <= 0;
+    }
+}
+
+class Explosion {
+    constructor(x, y) {
+        this.particulas = [];
+        for (let i = 0; i < 20; i++) this.particulas.push(new Particula(x, y));
+    }
+
+    actualizar() {
+        for (let p of this.particulas) p.actualizar();
+        this.particulas = this.particulas.filter(p => !p.terminada());
+    }
+
+    mostrar() {
+        for (let p of this.particulas) p.mostrar();
+    }
+
+    terminada() {
+        return this.particulas.length === 0;
+    }
+}
+
+function crearExplosion(x, y) {
+    explosiones.push(new Explosion(x, y));
+}
+
+async function loadImageAsync(src) {
+    return new Promise((res, rej) => loadImage(src, res, rej));
 }
