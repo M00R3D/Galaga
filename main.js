@@ -17,10 +17,14 @@ let puntaje = 0;
 let vidas = 3;
 let nivel = 1;
 let estrellas = [];
-let numEstrellas=200;
+let numEstrellas = 200;
 let enTransicion = false;
 let tiempoTransicion = 0;
 let duracionTransicion = 120;
+let enemigosAtacando = [];
+let indiceAtaque = 0;
+let tiempoUltimoAtaque = 0;
+let intervaloAtaque = 600; // milisegundos
 
 async function setup() {
     createCanvas(1240, 760);
@@ -34,8 +38,8 @@ async function setup() {
     enemigoImgs[2] = await loadImageAsync('recursos/enemigo3.png');
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
     generarFormacion();
-    tiempoParaAtaque = millis() + random(5000, 30000);
-        for (let i = 0; i < numEstrellas; i++) {
+    tiempoParaAtaque = 100;
+    for (let i = 0; i < numEstrellas; i++) {
         estrellas.push({
             x: random(width),
             y: random(height),
@@ -54,17 +58,18 @@ function draw() {
         textSize(48);
         textAlign(CENTER, CENTER);
         text("Nivel " + nivel, width / 2, height / 2);
-
         tiempoTransicion--;
         if (tiempoTransicion <= 0) {
             enTransicion = false;
             formacionCompletada = false;
             ataqueIniciado = false;
-            tiempoParaAtaque = millis() + random(5000, 30000);
+            enemigosAtacando = [];
+            tiempoParaAtaque = 100;
             generarFormacion();
         }
-    return;
-}
+        return;
+    }
+
     if (juegoTerminado) {
         fill(255, 0, 0);
         textSize(64);
@@ -87,22 +92,15 @@ function draw() {
 
     if (vidas <= 0) juegoTerminado = true;
 
-    if (c > 0) {
-        c--;
-    } else {
+    if (c > 0) c--;
+    else {
         c = 6;
-        if (frameNave === 0) {
-            frameNave = 1;
-            nave.img = imgNave2;
-        } else {
-            frameNave = 0;
-            nave.img = imgNave;
-        }
+        frameNave = 1 - frameNave;
+        nave.img = frameNave === 0 ? imgNave : imgNave2;
     }
 
-    if (cEnemigo > 0) {
-        cEnemigo--;
-    } else {
+    if (cEnemigo > 0) cEnemigo--;
+    else {
         cEnemigo = 6;
         frameEnemigo = (frameEnemigo + 1) % enemigoImgs.length;
     }
@@ -110,9 +108,7 @@ function draw() {
     for (let i = proyectiles.length - 1; i >= 0; i--) {
         proyectiles[i].mover();
         proyectiles[i].mostrar();
-        if (proyectiles[i].y <= 0) {
-            proyectiles.splice(i, 1);
-        }
+        if (proyectiles[i].y <= 0) proyectiles.splice(i, 1);
     }
 
     if (!formacionCompletada) {
@@ -122,21 +118,56 @@ function draw() {
             tiempoAtaque = millis();
         }
     } else {
-        if (millis() > tiempoParaAtaque) ataqueIniciado = true;
+        if (!ataqueIniciado && millis() > tiempoParaAtaque) {
+            ataqueIniciado = true;
+            enemigosAtacando = shuffle(enemigos.slice());
+            indiceAtaque = 0;
+            tiempoUltimoAtaque = millis();
+        }
+        if (ataqueIniciado && millis() - tiempoUltimoAtaque >= intervaloAtaque) {
+            if (indiceAtaque < enemigosAtacando.length) {
+                let enemigo = enemigosAtacando[indiceAtaque];
+
+                // Solo enemigos de la fila inferior (yObjetivo más alto)
+                let maxY = Math.max(...enemigos.map(e => e.yObjetivo));
+                if (enemigo.yObjetivo === maxY) {
+                    enemigo.atacando = true;
+
+                    // Dirección fija al momento de atacar
+                    let dx = nave.x + nave.w / 2 - enemigo.x;
+                    let dy = nave.y + nave.h / 2 - enemigo.y;
+                    let ang = atan2(dy, dx);
+                    enemigo.dx = cos(ang) * 4.5;
+                    enemigo.dy = sin(ang) * 4.5;
+                }
+
+                indiceAtaque++;
+                tiempoUltimoAtaque = millis();
+
+                // Reducir el intervalo cada vez
+                let secuencia = [10000, 8000, 6000, 4000, 2000, 1000];
+                let idx = Math.min(indiceAtaque, secuencia.length - 1);
+                intervaloAtaque = secuencia[idx];
+            }
+        }
+
     }
 
     for (let i = enemigos.length - 1; i >= 0; i--) {
-        if (!formacionCompletada) enemigos[i].moverHaciaFormacion();
-        else enemigos[i].moverEnAtaque(ataqueIniciado);
-        enemigos[i].mostrar();
+        let enemigo = enemigos[i];
+        if (!formacionCompletada) enemigo.moverHaciaFormacion();
+        else if (enemigo.atacando) enemigo.atacar();
+        else enemigo.y += 0.2;
 
-        if (enemigos[i].colisionaConFondo()) {
+        enemigo.mostrar();
+
+        if (enemigo.colisionaConFondo()) {
             enemigos.splice(i, 1);
             vidas--;
             continue;
         }
 
-        if (nave && enemigos[i].colisionaConNave(nave)) {
+        if (nave && enemigo.colisionaConNave(nave)) {
             enemigos.splice(i, 1);
             vidas--;
             if (vidas <= 0) juegoTerminado = true;
@@ -144,7 +175,7 @@ function draw() {
         }
 
         for (let j = proyectiles.length - 1; j >= 0; j--) {
-            if (enemigos[i].colisionaConProyectil(proyectiles[j])) {
+            if (enemigo.colisionaConProyectil(proyectiles[j])) {
                 enemigos.splice(i, 1);
                 proyectiles.splice(j, 1);
                 puntaje++;
@@ -152,12 +183,12 @@ function draw() {
             }
         }
     }
+
     if (enemigos.length === 0 && !enTransicion) {
         nivel++;
         enTransicion = true;
         tiempoTransicion = duracionTransicion;
     }
-
 }
 
 function keyPressed() {
@@ -174,7 +205,6 @@ function fondoEstrellado() {
     for (let estrella of estrellas) {
         circle(estrella.x, estrella.y, estrella.r);
         estrella.y += estrella.velocidad;
-
         if (estrella.y > height) {
             estrella.y = 0;
             estrella.x = random(width);
@@ -190,7 +220,8 @@ function reiniciarJuego() {
     juegoTerminado = false;
     formacionCompletada = false;
     ataqueIniciado = false;
-    tiempoParaAtaque = millis() + random(5000, 30000);
+    enemigosAtacando = [];
+    tiempoParaAtaque = 100;
     nivel = 1;
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
     generarFormacion();
@@ -266,6 +297,9 @@ class Enemigo {
         this.imgs = enemigoImgs;
         this.xObjetivo = xObjetivo;
         this.yObjetivo = yObjetivo;
+        this.atacando = false;
+        this.dx = 0;
+        this.dy = 0;
     }
 
     moverHaciaFormacion() {
@@ -273,9 +307,11 @@ class Enemigo {
         if (this.y > this.yObjetivo) this.y = this.yObjetivo;
     }
 
-    moverEnAtaque(rapido) {
-        this.y += rapido ? 2 : 0.5;
+    atacar() {
+        this.x += this.dx;
+        this.y += this.dy;
     }
+
 
     mostrar() {
         image(this.imgs[frameEnemigo], this.x - this.r, this.y - this.r, this.r * 2, this.r * 2);
