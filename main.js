@@ -2,17 +2,17 @@ let nave;
 let imgNave, imgNave2;
 let c = 6;
 let frameNave = 0;
-
 let proyectilImgs = [];
 let proyectiles = [];
-
 let enemigos = [];
-let enemigosSpawneados = 0;
+let formacionCompletada = false;
+let ataqueIniciado = false;
+let tiempoAtaque = 0;
+let tiempoParaAtaque = 0;
 let enemigoImgs = [];
 let frameEnemigo = 0;
 let cEnemigo = 6;
 let juegoTerminado = false;
-
 let puntaje = 0;
 let vidas = 3;
 let nivel = 1;
@@ -28,12 +28,12 @@ async function setup() {
     enemigoImgs[1] = await loadImageAsync('recursos/enemigo2.png');
     enemigoImgs[2] = await loadImageAsync('recursos/enemigo3.png');
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
-    enemigos.push(new Enemigo(random(50, width - 50), -40, 40));
+    generarFormacion();
+    tiempoParaAtaque = millis() + random(5000, 30000);
 }
 
 function draw() {
     background(5, 0, 14);
-
     if (juegoTerminado) {
         fill(255, 0, 0);
         textSize(64);
@@ -53,9 +53,9 @@ function draw() {
         nave.mover();
         nave.mostrar();
     }
-    if (vidas <= 0) {
-                    juegoTerminado = true;
-                }
+
+    if (vidas <= 0) juegoTerminado = true;
+
     if (c > 0) {
         c--;
     } else {
@@ -68,6 +68,7 @@ function draw() {
             nave.img = imgNave;
         }
     }
+
     if (cEnemigo > 0) {
         cEnemigo--;
     } else {
@@ -83,10 +84,21 @@ function draw() {
         }
     }
 
+    if (!formacionCompletada) {
+        let completos = enemigos.every(e => e.y >= e.yObjetivo);
+        if (completos) {
+            formacionCompletada = true;
+            tiempoAtaque = millis();
+        }
+    } else {
+        if (millis() > tiempoParaAtaque) ataqueIniciado = true;
+    }
+
     for (let i = enemigos.length - 1; i >= 0; i--) {
-        enemigos[i].mover();
+        if (!formacionCompletada) enemigos[i].moverHaciaFormacion();
+        else enemigos[i].moverEnAtaque(ataqueIniciado);
         enemigos[i].mostrar();
-        // Destruir si llega al fondo
+
         if (enemigos[i].colisionaConFondo()) {
             enemigos.splice(i, 1);
             vidas--;
@@ -96,11 +108,8 @@ function draw() {
         if (nave && enemigos[i].colisionaConNave(nave)) {
             enemigos.splice(i, 1);
             vidas--;
-            if (vidas <= 0) {
-                juegoTerminado = true;
-            }
+            if (vidas <= 0) juegoTerminado = true;
             continue;
-        
         }
 
         for (let j = proyectiles.length - 1; j >= 0; j--) {
@@ -108,16 +117,10 @@ function draw() {
                 enemigos.splice(i, 1);
                 proyectiles.splice(j, 1);
                 puntaje++;
+                if (puntaje % 10 === 0) nivel++;
                 break;
             }
         }
-    }
-
-    
-
-    if (frameCount % 120 === 0 && enemigosSpawneados<9) {
-        enemigos.push(new Enemigo(random(50, width - 50), -40, 40));
-        enemigosSpawneados++;
     }
 }
 
@@ -126,22 +129,39 @@ function keyPressed() {
         let nuevo = new Proyectil(nave.x + nave.w / 2 - 10, nave.y);
         proyectiles.push(nuevo);
     }
-    console.log("key:", key, "keyCode:", keyCode);
-    if ((key === 'r' || key === 'R')&& juegoTerminado == true) {
-        console.log("Reiniciando por tecla R");
-        reiniciarJuego();
-    }
+    if ((key === 'r' || key === 'R') && juegoTerminado) reiniciarJuego();
 }
+
 function reiniciarJuego() {
-    console.log("Reiniciando juego...");
     puntaje = 0;
     vidas = 3;
     enemigos = [];
     proyectiles = [];
-    enemigosSpawneados = 0;
     juegoTerminado = false;
+    formacionCompletada = false;
+    ataqueIniciado = false;
+    tiempoParaAtaque = millis() + random(5000, 30000);
+    nivel = 1;
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
+    generarFormacion();
 }
+
+function generarFormacion() {
+    let espaciadoX = 100;
+    let espaciadoY = 80;
+    let inicioX = 200;
+    let inicioY = -100;
+    for (let g = 0; g < 2; g++) {
+        for (let fila = 0; fila < 2; fila++) {
+            for (let col = 0; col < 5; col++) {
+                let xObjetivo = inicioX + col * espaciadoX + g * 500;
+                let yObjetivo = 100 + fila * espaciadoY;
+                enemigos.push(new Enemigo(xObjetivo, inicioY - random(50), 40, xObjetivo, yObjetivo));
+            }
+        }
+    }
+}
+
 class Nave {
     constructor(x, y, w, h, img) {
         this.x = x;
@@ -152,9 +172,9 @@ class Nave {
     }
 
     mover() {
-        if (keyIsDown('a') && keyIsDown('d')) { return; }
-        if (keyIsDown('a')) { this.x -= 5; }
-        else if (keyIsDown('d')) { this.x += 5; }
+        if (keyIsDown('a') && keyIsDown('d')) return;
+        if (keyIsDown('a')) this.x -= 7;
+        else if (keyIsDown('d')) this.x += 7;
         this.x = constrain(this.x, 0, width - this.w);
     }
 
@@ -165,7 +185,7 @@ class Nave {
 
 class Proyectil {
     constructor(x, y) {
-        this.x = x-10;
+        this.x = x - 10;
         this.y = y;
         this.vel = 7;
         this.w = 40;
@@ -176,9 +196,8 @@ class Proyectil {
 
     mover() {
         this.y -= this.vel;
-        if (this.c > 0) {
-            this.c--;
-        } else {
+        if (this.c > 0) this.c--;
+        else {
             this.c = 4;
             this.frame = (this.frame + 1) % proyectilImgs.length;
         }
@@ -190,16 +209,22 @@ class Proyectil {
 }
 
 class Enemigo {
-    constructor(x, y, r) {
+    constructor(x, y, r, xObjetivo, yObjetivo) {
         this.x = x;
         this.y = y;
         this.r = r;
-        this.vel = 1;
         this.imgs = enemigoImgs;
+        this.xObjetivo = xObjetivo;
+        this.yObjetivo = yObjetivo;
     }
 
-    mover() {
-        this.y += this.vel;
+    moverHaciaFormacion() {
+        this.y += 1;
+        if (this.y > this.yObjetivo) this.y = this.yObjetivo;
+    }
+
+    moverEnAtaque(rapido) {
+        this.y += rapido ? 2 : 0.5;
     }
 
     mostrar() {
@@ -209,19 +234,17 @@ class Enemigo {
     colisionaConNave(nave) {
         let dx = this.x - (nave.x + nave.w / 2);
         let dy = this.y - (nave.y + nave.h / 2);
-        let distancia = sqrt(dx * dx + dy * dy);
-        return distancia < this.r + max(nave.w, nave.h) / 2;
+        return sqrt(dx * dx + dy * dy) < this.r + max(nave.w, nave.h) / 2;
     }
 
     colisionaConProyectil(proyectil) {
         let dx = this.x - (proyectil.x + proyectil.w / 2);
         let dy = this.y - (proyectil.y + proyectil.h / 2);
-        let distancia = sqrt(dx * dx + dy * dy);
-        return distancia < this.r + max(proyectil.w, proyectil.h) / 2;
+        return sqrt(dx * dx + dy * dy) < this.r + max(proyectil.w, proyectil.h) / 2;
     }
-    
+
     colisionaConFondo() {
-        return (this.y>760);
+        return this.y > 760;
     }
 }
 
@@ -229,16 +252,4 @@ function loadImageAsync(path) {
     return new Promise((resolve, reject) => {
         loadImage(path, resolve, reject);
     });
-}
-
-function reiniciarJuego() {
-    console.log("Reiniciando juego...");
-    puntaje = 0;
-    vidas = 3;
-    enemigos = [];
-    proyectiles = [];
-    enemigosSpawneados = 0;
-    juegoTerminado = false;
-    nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
-    enemigos.push(new Enemigo(random(50, width - 50), -40, 20));
 }
