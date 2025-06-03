@@ -15,6 +15,7 @@ let juegoTerminado = false;
 
 let puntaje = 0;
 let vidas = 3;
+let nivel = 1;
 
 async function setup() {
     createCanvas(1240, 760);
@@ -46,6 +47,7 @@ function draw() {
     textAlign(LEFT, TOP);
     text("Puntaje: " + puntaje, 20, 20);
     text("Vidas: " + vidas, 20, 60);
+    text("nivel:" + nivel, 20, 100);
 
     if (nave) {
         nave.mover();
