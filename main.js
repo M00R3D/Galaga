@@ -159,20 +159,17 @@ function draw() {
 
         if (enemigo.colisionaConFondo()) {
             enemigos.splice(i, 1);
-            if(!naveDesaparecida){vidas--;}
+            if (!naveDesaparecida) manejarColisionConNave();
             continue;
         }
 
+
         if (!naveDesaparecida && nave && enemigo.colisionaConNave(nave)) {
-            crearExplosion(nave.x + nave.w / 2, nave.y + nave.h / 2);
+            manejarColisionConNave();
             enemigos.splice(i, 1);
-            if(!naveDesaparecida){vidas--;}
-            naveDesaparecida = true;
-            tiempoRespawn = millis() + 2000;
-            // nave = null;
-            if (vidas <= 0) juegoTerminado = true;
             continue;
         }
+
 
         for (let j = proyectiles.length - 1; j >= 0; j--) {
             if (enemigo.colisionaConProyectil(proyectiles[j])) {
@@ -212,11 +209,12 @@ function draw() {
             proyectilesEnemigo.splice(i, 1);
             continue;
         }
-        if (nave && pe.colisionaConNave(nave)) {
-            proyectilesEnemigo.splice(i, 1);
-            if(!naveDesaparecida){vidas--;}
-            if (vidas <= 0) juegoTerminado = true;
-        }
+        if (nave && pe.colisionaConNave(nave)) 
+            {
+                proyectilesEnemigo.splice(i, 1);
+                if (!naveDesaparecida) manejarColisionConNave();
+            }
+
     }
 }
 
@@ -437,4 +435,13 @@ function crearExplosion(x, y) {
 
 async function loadImageAsync(src) {
     return new Promise((res, rej) => loadImage(src, res, rej));
+}
+
+
+function manejarColisionConNave() {
+    crearExplosion(nave.x + nave.w / 2, nave.y + nave.h / 2);
+    if (!naveDesaparecida) vidas--;
+    naveDesaparecida = true;
+    tiempoRespawn = millis() + 2000;
+    if (vidas <= 0) juegoTerminado = true;
 }
