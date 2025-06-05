@@ -28,7 +28,9 @@ let intervaloAtaque = 600;
 let explosiones = [];
 let naveDesaparecida = false;
 let tiempoRespawn = 0;
-let proyectilesEnemigo = []
+let proyectilesEnemigo = [];
+let tiempoUltimoDisparo = 0;
+let cooldownDisparo = 400;
 
 async function setup() {
     createCanvas(1240, 760);
@@ -220,8 +222,12 @@ function draw() {
 
 function keyPressed() {
     if (key === ' ' && nave && !naveDesaparecida) {
-        let nuevo = new Proyectil(nave.x + nave.w / 2 - 10, nave.y);
-        proyectiles.push(nuevo);
+        let ahora = millis();
+        if (ahora - tiempoUltimoDisparo >= cooldownDisparo) {
+            let nuevo = new Proyectil(nave.x + nave.w / 2 - 10, nave.y);
+            proyectiles.push(nuevo);
+            tiempoUltimoDisparo = ahora;
+        }
     }
     if ((key === 'r' || key === 'R') && juegoTerminado) reiniciarJuego();
 }
