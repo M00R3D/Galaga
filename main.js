@@ -159,17 +159,17 @@ function draw() {
 
         if (enemigo.colisionaConFondo()) {
             enemigos.splice(i, 1);
-            vidas--;
+            if(!naveDesaparecida){vidas--;}
             continue;
         }
 
         if (!naveDesaparecida && nave && enemigo.colisionaConNave(nave)) {
             crearExplosion(nave.x + nave.w / 2, nave.y + nave.h / 2);
             enemigos.splice(i, 1);
-            vidas--;
+            if(!naveDesaparecida){vidas--;}
             naveDesaparecida = true;
             tiempoRespawn = millis() + 2000;
-            nave = null;
+            // nave = null;
             if (vidas <= 0) juegoTerminado = true;
             continue;
         }
@@ -214,7 +214,7 @@ function draw() {
         }
         if (nave && pe.colisionaConNave(nave)) {
             proyectilesEnemigo.splice(i, 1);
-            vidas--;
+            if(!naveDesaparecida){vidas--;}
             if (vidas <= 0) juegoTerminado = true;
         }
     }
