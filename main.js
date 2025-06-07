@@ -37,6 +37,8 @@ let tiempoUltimoDisparo = 0;
 let cooldownDisparo = 400;
 let menuActivo = true;
 let gruposdinamita = [];
+let time = 0;
+let selecMenu=0;
 
 async function setup() {
     createCanvas(1240, 760);
@@ -98,18 +100,31 @@ function draw() {
     fondoEstrellado();
 
     if (menuActivo) {
-    background(5, 0, 14);
+    // background(5, 0, 14);
+    fondoEstrellado();
     fill(255);
     textAlign(CENTER, CENTER);
-    textSize(72);
-    text("GALAGA ", width/2, height/2 -150);
+    textSize(102);
+    let floatY = height / 2 + sin(time) * 20;
+    let r = 128 + 127 * sin(time * 0.8);
+    let g = 128 + 127 * sin(time * 0.9 + PI / 3);
+    let b = 128 + 127 * sin(time * 1.1 + PI / 5);
+    fill(r, g, b, 200);
+    // text("Texto flotante", width / 2, floatY);
+    text("GALAGA ", width/2,  floatY -50);
     textSize(32);
+    time += 0.07;
+    if(selecMenu==0){fill(r, g, b, 200);}else{fill(255);}
     text("Presiona P para empezar", width/2, height/2 + 50);
+    if(selecMenu==0){fill(r, g, b, 200);}else{fill(255);}
     textSize(32);
+    if(selecMenu==1){fill(r, g, b, 200);}else{fill(255);}
     text("puntuaciones", width/2, height/2 + 80);
+    if(selecMenu==2){fill(r, g, b, 200);}else{fill(255);}
     textSize(32);
     text("Salir", width/2, height/2 + 110);
-    textSize(32);
+    textSize(12);
+    fill(255);
     text("Hecho por Job Moore Garay e Isaias salgado castillo", width/2, height/2 +300);
     return;
     }
@@ -359,10 +374,28 @@ function keyPressed() {
     //         tiempoUltimoDisparo = ahora;
     //     }
     // }
-    if (menuActivo && key === 'p' || key ==='P') {
-    menuActivo = false;
-    return;
-  }
+    if (menuActivo) 
+    {
+        if(key === 'p' || key ==='P')
+        {
+            if(selecMenu==0){menuActivo = false;}
+            if(selecMenu==1){menuActivo = false;}
+            if(selecMenu==2){menuActivo = false;}
+            // return;
+        }
+
+        if(key === 'w' || key ==='W')
+        {
+            if(selecMenu>0){selecMenu--;}else{selecMenu=2;}
+            // return;
+        }
+
+        if(key === 's' || key ==='S')
+        {
+            if(selecMenu<2){selecMenu++;}else{selecMenu=0;}
+            // return;
+        }
+    }
     if ((key === 'r' || key === 'R') && juegoTerminado) reiniciarJuego();
 }
 function fondoEstrellado() {
