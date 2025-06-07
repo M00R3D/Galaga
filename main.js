@@ -1,3 +1,5 @@
+// guia de animaciones del jefe, 0-4 caminando,  4-11 mordiendo  11-16 parpadeando
+
 let nave;
 let imgNave, imgNave2;
 let c = 6;
@@ -6,6 +8,7 @@ let proyectilImgs = [];
 let proyectiles = [];
 let enemigos = [];
 let enemigosResistentes = [];
+let somoslosjefes = [];
 let formacionCompletada = false;
 let ataqueIniciado = false;
 let tiempoAtaque = 0;
@@ -36,6 +39,7 @@ let cooldownDisparo = 400;
 async function setup() {
     createCanvas(1240, 760);
     let enemigoBImgs = [];
+    let jefeImgs = [];
     imgNave = await loadImageAsync('recursos/nave1.png');
     imgNave2 = await loadImageAsync('recursos/nave2.png');
     proyectilImgs[0] = await loadImageAsync('recursos/proyectil1.png');
@@ -47,9 +51,28 @@ async function setup() {
     enemigoBImgs[0] = await loadImageAsync('recursos/enemigoB.png');
     enemigoBImgs[1] = await loadImageAsync('recursos/enemigoB1.png');
     enemigoBImgs[2] = await loadImageAsync('recursos/enemigoB2.png');
+    jefeImgs[0] = await loadImageAsync('recursos/jefe00.png');
+    jefeImgs[1] = await loadImageAsync('recursos/jefe01.png');
+    jefeImgs[2] = await loadImageAsync('recursos/jefe02.png');
+    jefeImgs[3] = await loadImageAsync('recursos/jefe03.png');
+    jefeImgs[4] = await loadImageAsync('recursos/jefe04.png');
+    jefeImgs[5] = await loadImageAsync('recursos/jefe05.png');
+    jefeImgs[6] = await loadImageAsync('recursos/jefe06.png');
+    jefeImgs[7] = await loadImageAsync('recursos/jefe07.png');
+    jefeImgs[8] = await loadImageAsync('recursos/jefe08.png');
+    jefeImgs[9] = await loadImageAsync('recursos/jefe09.png');
+    jefeImgs[10] = await loadImageAsync('recursos/jefe10.png');
+    jefeImgs[11] = await loadImageAsync('recursos/jefe11.png');
+    jefeImgs[12] = await loadImageAsync('recursos/jefe12.png');
+    jefeImgs[13] = await loadImageAsync('recursos/jefe13.png');
+    jefeImgs[14] = await loadImageAsync('recursos/jefe14.png');
+    jefeImgs[15] = await loadImageAsync('recursos/jefe15.png');
+    jefeImgs[16] = await loadImageAsync('recursos/jefe16.png');
+
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
     generarFormacion();
     enemigosResistentes.push(new EnemigoResistente(100, 50, 50, 50, enemigoBImgs));
+    somoslosjefes.push(new Jefe(300, 50, 150, 150, jefeImgs));
     tiempoParaAtaque = 100;
     for (let i = 0; i < numEstrellas; i++) {
         estrellas.push({
@@ -141,20 +164,36 @@ function draw() {
     let er = enemigosResistentes[i];
     er.mover();
     er.mostrar();
-    for (let j = proyectiles.length - 1; j >= 0; j--) {
-        if (er.colisionaConProyectil(proyectiles[j])) {
-            proyectiles.splice(j, 1);
-            er.health--;
-            if (er.health <= 0) {
-                crearExplosion(er.x + er.w/2, er.y + er.h/2);
-                enemigosResistentes.splice(i, 1);
-                puntaje += 2;
+        for (let j = proyectiles.length - 1; j >= 0; j--) {
+            if (er.colisionaConProyectil(proyectiles[j])) {
+                proyectiles.splice(j, 1);
+                er.health--;
+                if (er.health <= 0) {
+                    crearExplosion(er.x + er.w/2, er.y + er.h/2);
+                    enemigosResistentes.splice(i, 1);
+                    puntaje += 2;
+                }
+                break;
             }
-            break;
         }
     }
-}
-
+    for (let i = somoslosjefes.length - 1; i >= 0; i--) {
+    let er = somoslosjefes[i];
+    er.mover();
+    er.mostrar();
+        for (let j = proyectiles.length - 1; j >= 0; j--) {
+            if (er.colisionaConProyectil(proyectiles[j])) {
+                proyectiles.splice(j, 1);
+                er.health--;
+                if (er.health <= 0) {
+                    crearExplosion(er.x + er.w/2, er.y + er.h/2);
+                    somoslosjefes.splice(i, 1);
+                    puntaje += 2;
+                }
+                break;
+            }
+        }
+    }
     if (!formacionCompletada) {
         let completos = enemigos.every(e => e.y >= e.yObjetivo);
         if (completos) {
@@ -460,6 +499,43 @@ class EnemigoResistente {
                this.y + this.h > p.y;
     }
 }
+class Jefe {
+    constructor(x, y, w, h, imgs) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.imgs = imgs;
+        this.health = 10;
+        this.vx = 3;
+        this.vy = 1.2;
+        this.cycleCount = 0;
+        this.frame = 0;
+        this.c = 6;
+    }
+    mover() {
+        this.cycleCount++;
+        if (this.cycleCount % 60 === 0) this.vx = -this.vx;
+        // this.x += this.vx;
+        this.y += this.vy;
+        this.x = constrain(this.x, 0, width - this.w);
+        if (this.c > 0) this.c--;
+        else {
+            this.c = 6;
+            this.frame = (this.frame + 1) % this.imgs.length;
+        }
+    }
+    mostrar() {
+        image(this.imgs[this.frame], this.x, this.y, this.w, this.h);
+    }
+    colisionaConProyectil(p) {
+        return this.x < p.x + p.w &&
+               this.x + this.w > p.x &&
+               this.y < p.y + p.h &&
+               this.y + this.h > p.y;
+    }
+}
+
 class Particula {
     constructor(x, y) {
         this.x = x;
