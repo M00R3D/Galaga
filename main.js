@@ -5,6 +5,7 @@ let frameNave = 0;
 let proyectilImgs = [];
 let proyectiles = [];
 let enemigos = [];
+let enemigosResistentes = [];
 let formacionCompletada = false;
 let ataqueIniciado = false;
 let tiempoAtaque = 0;
@@ -34,6 +35,7 @@ let cooldownDisparo = 400;
 
 async function setup() {
     createCanvas(1240, 760);
+    let enemigoBImgs = [];
     imgNave = await loadImageAsync('recursos/nave1.png');
     imgNave2 = await loadImageAsync('recursos/nave2.png');
     proyectilImgs[0] = await loadImageAsync('recursos/proyectil1.png');
@@ -42,8 +44,12 @@ async function setup() {
     enemigoImgs[0] = await loadImageAsync('recursos/enemigo1.png');
     enemigoImgs[1] = await loadImageAsync('recursos/enemigo2.png');
     enemigoImgs[2] = await loadImageAsync('recursos/enemigo3.png');
+    enemigoBImgs[0] = await loadImageAsync('recursos/enemigoB.png');
+    enemigoBImgs[1] = await loadImageAsync('recursos/enemigoB1.png');
+    enemigoBImgs[2] = await loadImageAsync('recursos/enemigoB2.png');
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
     generarFormacion();
+    enemigosResistentes.push(new EnemigoResistente(100, 50, 50, 50, enemigoBImgs));
     tiempoParaAtaque = 100;
     for (let i = 0; i < numEstrellas; i++) {
         estrellas.push({
@@ -117,6 +123,23 @@ function draw() {
         proyectiles[i].mostrar();
         if (proyectiles[i].y <= 0) proyectiles.splice(i, 1);
     }
+    for (let i = enemigosResistentes.length - 1; i >= 0; i--) {
+    let er = enemigosResistentes[i];
+    er.mover();
+    er.mostrar();
+    for (let j = proyectiles.length - 1; j >= 0; j--) {
+        if (er.colisionaConProyectil(proyectiles[j])) {
+            proyectiles.splice(j, 1);
+            er.health--;
+            if (er.health <= 0) {
+                crearExplosion(er.x + er.w/2, er.y + er.h/2);
+                enemigosResistentes.splice(i, 1);
+                puntaje += 2;
+            }
+            break;
+        }
+    }
+}
 
     if (!formacionCompletada) {
         let completos = enemigos.every(e => e.y >= e.yObjetivo);
@@ -387,7 +410,42 @@ class Enemigo {
                this.y + this.r > p.y && this.y - this.r < p.y + p.h;
     }
 }
-
+class EnemigoResistente {
+    constructor(x, y, w, h, imgs) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.imgs = imgs;
+        this.health = 2;
+        this.vx = 3;
+        this.vy = 1.2;
+        this.cycleCount = 0;
+        this.frame = 0;
+        this.c = 6;
+    }
+    mover() {
+        this.cycleCount++;
+        if (this.cycleCount % 60 === 0) this.vx = -this.vx;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.x = constrain(this.x, 0, width - this.w);
+        if (this.c > 0) this.c--;
+        else {
+            this.c = 6;
+            this.frame = (this.frame + 1) % this.imgs.length;
+        }
+    }
+    mostrar() {
+        image(this.imgs[this.frame], this.x, this.y, this.w, this.h);
+    }
+    colisionaConProyectil(p) {
+        return this.x < p.x + p.w &&
+               this.x + this.w > p.x &&
+               this.y < p.y + p.h &&
+               this.y + this.h > p.y;
+    }
+}
 class Particula {
     constructor(x, y) {
         this.x = x;
