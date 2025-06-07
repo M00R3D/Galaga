@@ -36,6 +36,7 @@ let proyectilesEnemigo = [];
 let tiempoUltimoDisparo = 0;
 let cooldownDisparo = 400;
 let menuActivo = true;
+let gruposdinamita = [];
 
 async function setup() {
     createCanvas(1240, 760);
@@ -72,7 +73,14 @@ async function setup() {
 
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
     generarFormacion();
-    enemigosResistentes.push(new EnemigoResistente(100, 50, 50, 50, enemigoBImgs));
+    let leader = new EnemigoResistente(200, 50, 50, 50, enemigoBImgs);
+    let miembros = [
+    new Enemigo(leader.x - 60, leader.y + 30, 40, leader.x - 60, leader.y + 30),
+    new Enemigo(leader.x + 60, leader.y + 30, 40, leader.x + 60, leader.y + 30),
+    new Enemigo(leader.x,       leader.y + 60, 40, leader.x,       leader.y + 60)
+  ];
+  gruposdinamita.push(new GrupoDinamita(leader, miembros));
+    //enemigosResistentes.push(new EnemigoResistente(100, 50, 50, 50, enemigoBImgs));
     somoslosjefes.push(new Jefe(300, 50, 150, 150, jefeImgs));
     tiempoParaAtaque = 100;
     for (let i = 0; i < numEstrellas; i++) {
@@ -194,6 +202,35 @@ function draw() {
             }
         }
     }
+
+ for (let gdIndex = gruposdinamita.length - 1; gdIndex >= 0; gdIndex--) {
+  let grupo = gruposdinamita[gdIndex];
+  grupo.mover();
+  grupo.mostrar();
+  for (let i = proyectiles.length - 1; i >= 0; i--) {
+    let p = proyectiles[i];
+    if (grupo.leader.colisionaConProyectil(p)) {
+      proyectiles.splice(i, 1);
+      grupo.leader.health--;
+      if (grupo.leader.health <= 0) {
+        crearExplosion(grupo.leader.x + grupo.leader.w/2, grupo.leader.y + grupo.leader.h/2);
+        gruposdinamita.splice(gdIndex, 1);
+        puntaje += 2;
+      }
+      break;
+    }
+    for (let mIndex = grupo.miembros.length - 1; mIndex >= 0; mIndex--) {
+      let miembro = grupo.miembros[mIndex];
+      if (miembro.colisionaConProyectil(p)) {
+        proyectiles.splice(i, 1);
+        crearExplosion(miembro.x + miembro.r, miembro.y + miembro.r);
+        grupo.miembros.splice(mIndex, 1);
+        puntaje++;
+        break;
+      }
+    }
+  }
+}
     for (let i = somoslosjefes.length - 1; i >= 0; i--) {
     let er = somoslosjefes[i];
     er.mover();
@@ -518,6 +555,25 @@ class EnemigoResistente {
                this.y < p.y + p.h &&
                this.y + this.h > p.y;
     }
+}
+class GrupoDinamita {
+  constructor(leader, miembros) {
+    this.leader = leader;
+    this.miembros = miembros;
+  }
+  mover() {
+    this.leader.mover();
+    let dx = this.leader.vx;
+    let dy = this.leader.vy;
+    for (let m of this.miembros) {
+      m.x += dx;
+      m.y += dy;
+    }
+  }
+  mostrar() {
+    this.leader.mostrar();
+    for (let m of this.miembros) m.mostrar();
+  }
 }
 class Jefe {
     constructor(x, y, w, h, imgs) {
