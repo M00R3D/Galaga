@@ -35,6 +35,7 @@ let tiempoRespawn = 0;
 let proyectilesEnemigo = [];
 let tiempoUltimoDisparo = 0;
 let cooldownDisparo = 400;
+let menuActivo = true;
 
 async function setup() {
     createCanvas(1240, 760);
@@ -88,6 +89,22 @@ function draw() {
     background(5, 0, 14);
     fondoEstrellado();
 
+    if (menuActivo) {
+    background(5, 0, 14);
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(72);
+    text("GALAGA ", width/2, height/2 -150);
+    textSize(32);
+    text("Presiona P para empezar", width/2, height/2 + 50);
+    textSize(32);
+    text("puntuaciones", width/2, height/2 + 80);
+    textSize(32);
+    text("Salir", width/2, height/2 + 110);
+    textSize(32);
+    text("Hecho por Job Moore Garay e Isaias salgado castillo", width/2, height/2 +300);
+    return;
+    }
     if (enTransicion) {
         fill(255);
         textSize(48);
@@ -305,9 +322,12 @@ function keyPressed() {
     //         tiempoUltimoDisparo = ahora;
     //     }
     // }
+    if (menuActivo && key === 'p' || key ==='P') {
+    menuActivo = false;
+    return;
+  }
     if ((key === 'r' || key === 'R') && juegoTerminado) reiniciarJuego();
 }
-
 function fondoEstrellado() {
     noStroke();
     fill(255);
