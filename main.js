@@ -100,6 +100,20 @@ function draw() {
     if (!naveDesaparecida && nave) {
         nave.mover();
         nave.mostrar();
+
+        if (keyIsDown(' ') && nave && !naveDesaparecida)
+        {
+            let ahora = millis();
+            if (ahora - tiempoUltimoDisparo >= cooldownDisparo) 
+                {
+                let nuevo = new Proyectil(nave.x + nave.w / 2 - 10, nave.y);
+                proyectiles.push(nuevo);
+                tiempoUltimoDisparo = ahora;
+                }
+        }
+
+
+        
     } else if (millis() > tiempoRespawn && vidas > 0) {
         naveDesaparecida = false;
         nave = new Nave(-100, height - 100, 60, 64, imgNave);
@@ -244,14 +258,14 @@ function draw() {
 }
 
 function keyPressed() {
-    if (key === ' ' && nave && !naveDesaparecida) {
-        let ahora = millis();
-        if (ahora - tiempoUltimoDisparo >= cooldownDisparo) {
-            let nuevo = new Proyectil(nave.x + nave.w / 2 - 10, nave.y);
-            proyectiles.push(nuevo);
-            tiempoUltimoDisparo = ahora;
-        }
-    }
+    // if (key === ' ' && nave && !naveDesaparecida) {
+    //     let ahora = millis();
+    //     if (ahora - tiempoUltimoDisparo >= cooldownDisparo) {
+    //         let nuevo = new Proyectil(nave.x + nave.w / 2 - 10, nave.y);
+    //         proyectiles.push(nuevo);
+    //         tiempoUltimoDisparo = ahora;
+    //     }
+    // }
     if ((key === 'r' || key === 'R') && juegoTerminado) reiniciarJuego();
 }
 
