@@ -38,6 +38,7 @@ let gruposdinamita = [];
 let time = 0;
 let selecMenu=0;
 let enemigoBImgs = [];
+let puntajeGuardado = false;
 
 async function setup() {
     createCanvas(1240, 760);
@@ -135,14 +136,30 @@ function draw() {
     }
 
     if (juegoTerminado) {
-        fill(255, 0, 0);
-        textSize(64);
-        textAlign(CENTER, CENTER);
-        text("Juego Terminado", width / 2, height / 2);
-        textSize(24);
-        fill(255);
-        text("Presiona R para volver al menú", width / 2, height / 2 + 60);
+    fill(255,0,0); textAlign(CENTER,CENTER); textSize(64);
+    text("Juego Terminado", width/2, height/2 - 40);
+    textSize(24); fill(255);
+    text("Presiona R para volver al menú", width/2, height/2 + 20);
+
+    if (!puntajeGuardado) {
+      let lista = JSON.parse(localStorage.getItem("puntajes"))||[];
+      let menor = lista.length<5 ? 0 : lista[lista.length-1].puntos;
+      if (lista.length<5 || puntaje>menor) {
+        let nombre = prompt("¡Nuevo Top! Ingresa tu nombre:");
+        if (!nombre) nombre="Anon";
+        lista.push({ puntos: puntaje, fecha: new Date().toLocaleDateString(), nombre });
+        lista.sort((a,b)=>b.puntos-a.puntos);
+        lista = lista.slice(0,5);
+        localStorage.setItem("puntajes", JSON.stringify(lista));
+      }
+      let msg = "🏆 TOP 5 PUNTUACIONES:\n";
+      lista.forEach((r,i)=> msg+=`${i+1}. ${r.nombre}: ${r.puntos} pts - ${r.fecha}\n`);
+      alert(msg);
+      puntajeGuardado = true;
+    }
         return;
+
+
     }
 
 
@@ -155,6 +172,22 @@ function draw() {
     if (vidas <= 0 && !juegoTerminado) {
         juegoTerminado = true;
         guardarPuntaje(puntaje); // 👈 Se guarda el puntaje final
+         if (!puntajeGuardado) {
+            let lista = JSON.parse(localStorage.getItem("puntajes")) || [];
+            let menor = lista.length < 5 ? 0 : lista[lista.length-1].puntos;
+            if (lista.length < 5 || puntaje > menor) {
+            let nombre = prompt("¡Nuevo Top! Ingresa tu nombre:");
+            if (!nombre) nombre = "Anon";
+            lista.push({ puntos: puntaje, fecha: new Date().toLocaleDateString(), nombre });
+            lista.sort((a,b)=>b.puntos-a.puntos);
+            lista = lista.slice(0,5);
+            localStorage.setItem("puntajes", JSON.stringify(lista));
+            }
+            let msg = "🏆 TOP 5 PUNTUACIONES:\n";
+            lista.forEach((r,i)=> msg += `${i+1}. ${r.nombre}: ${r.puntos} pts - ${r.fecha}\n`);
+            alert(msg);
+            puntajeGuardado = true;
+        }
     }
 
     if (!naveDesaparecida && nave) {
