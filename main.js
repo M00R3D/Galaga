@@ -17,7 +17,7 @@ let cEnemigo = 6;
 let juegoTerminado = false;
 let puntaje = 0;
 let vidas = 3;
-let nivel = 1;
+let nivel = 3;
 let estrellas = [];
 let numEstrellas = 200;
 let enTransicion = false;
@@ -256,6 +256,17 @@ function draw() {
         let er = somoslosjefes[i];
         er.mover();
         er.mostrar();
+        // Revisar colisiones de proyectiles del jefe con la nave
+            if (nivel === 3 && er.visible) {
+                for (let k = er.proyectiles.length - 1; k >= 0; k--) {
+                    let p = er.proyectiles[k];
+                    if (!naveDesaparecida && colisionRectangular(p, nave)) {
+                        manejarColisionConNave();
+                        er.proyectiles.splice(k, 1);
+                    }
+                }
+            }
+
             for (let j = proyectiles.length - 1; j >= 0; j--) {
                 if (er.colisionaConProyectil(proyectiles[j]) && nivel===3) {
                     proyectiles.splice(j, 1);
@@ -757,8 +768,14 @@ class Jefe {
             }
 
             // Actualizar proyectiles del jefe
-            for (let p of this.proyectiles) {
+            for (let i = this.proyectiles.length - 1; i >= 0; i--) {
+                let p = this.proyectiles[i];
                 p.mover();
+
+                if (!naveDesaparecida && colisionRectangular(p, nave)) {
+                    manejarColisionConNave();
+                    this.proyectiles.splice(i, 1);
+                }
             }
 
             // Limpiar proyectiles que salieron de pantalla
@@ -912,4 +929,12 @@ function volverAlMenu() {
     generarFormacion();
     generarFormacionDinamita();
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
+}
+function colisionRectangular(a, b) {
+    return (
+        a.x < b.x + b.w &&
+        a.x + a.w > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.h > b.y
+    );
 }
