@@ -39,10 +39,11 @@ let menuActivo = true;
 let gruposdinamita = [];
 let time = 0;
 let selecMenu=0;
+let enemigoBImgs = [];
 
 async function setup() {
     createCanvas(1240, 760);
-    let enemigoBImgs = [];
+    
     let jefeImgs = [];
     imgNave = await loadImageAsync('recursos/nave1.png');
     imgNave2 = await loadImageAsync('recursos/nave2.png');
@@ -75,13 +76,7 @@ async function setup() {
 
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
     generarFormacion();
-    let leader = new EnemigoResistente(200, 50, 50, 50, enemigoBImgs);
-    let miembros = [
-    new Enemigo(leader.x - 60, leader.y + 30, 40, leader.x - 60, leader.y + 30),
-    new Enemigo(leader.x + 60, leader.y + 30, 40, leader.x + 60, leader.y + 30),
-    new Enemigo(leader.x,       leader.y + 60, 40, leader.x,       leader.y + 60)
-  ];
-  gruposdinamita.push(new GrupoDinamita(leader, miembros));
+    generarFormacionDinamita()
     //enemigosResistentes.push(new EnemigoResistente(100, 50, 50, 50, enemigoBImgs));
     somoslosjefes.push(new Jefe(300, 50, 150, 150, jefeImgs));
     tiempoParaAtaque = 100;
@@ -425,6 +420,17 @@ function reiniciarJuego() {
     nivel = 1;
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
     generarFormacion();
+    generarFormacionDinamita()
+}
+
+function generarFormacionDinamita(){
+    let leader = new EnemigoResistente(200, 50, 50, 50, enemigoBImgs);
+    let miembros = [
+    new Enemigo(leader.x - 60, leader.y + 30, 40, leader.x - 60, leader.y + 30),
+    new Enemigo(leader.x + 60, leader.y + 30, 40, leader.x + 60, leader.y + 30),
+    new Enemigo(leader.x,       leader.y + 60, 40, leader.x,       leader.y + 60)
+  ];
+  gruposdinamita.push(new GrupoDinamita(leader, miembros));
 }
 
 function generarFormacion() {
