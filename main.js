@@ -39,6 +39,7 @@ let time = 0;
 let selecMenu=0;
 let enemigoBImgs = [];
 let puntajeGuardado = false;
+let juegoGanado = false;
 
 async function setup() {
     createCanvas(1240, 760);
@@ -160,6 +161,18 @@ function draw() {
         return;
 
 
+    }
+    if (juegoGanado) {
+        fill(0, 255, 100);
+        textAlign(CENTER, CENTER);
+        textSize(64);
+        text("¡Has ganado el juego!", width / 2, height / 2 - 40);
+        textSize(24);
+        fill(255);
+        text("Presiona R para volver al menú", width / 2, height / 2 + 20);
+
+        // Detener juego
+        return;
     }
 
 
@@ -441,11 +454,21 @@ function draw() {
             manejarColisionConNave();
         }
         }
+
+    if (nivel === 3 && somoslosjefes.length > 0 && somoslosjefes[0].health <= 0 && !juegoGanado)
+        {
+            juegoGanado = true;
+        }
+
 }
 function keyPressed() {
-     if (juegoTerminado && key === 'r') {
+    if (juegoTerminado&& key === 'r') {
         volverAlMenu();
     }
+    if (juegoGanado && key === 'r') {
+        location.reload();
+    }
+
     if (menuActivo) 
     {
         if(key === 'p' || key ==='P')
@@ -495,6 +518,7 @@ function reiniciarJuego() {
     enemigos = [];
     proyectiles = [];
     juegoTerminado = false;
+    juegoGanado = false;
     formacionCompletada = false;
     ataqueIniciado = false;
     enemigosAtacando = [];
