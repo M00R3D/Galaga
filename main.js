@@ -440,17 +440,16 @@ function keyPressed() {
         if(key === 'p' || key ==='P')
         {
             if(selecMenu==0){menuActivo = false;}
-            if (selecMenu == 1) {
+            if (menuActivo && (key === 'p' || key === 'P') && selecMenu === 1) {
                 let puntajes = JSON.parse(localStorage.getItem("puntajes")) || [];
-                
                 if (puntajes.length === 0) {
-                    alert("Aún no hay puntuaciones registradas.");
+                alert("Aún no hay puntuaciones registradas.");
                 } else {
-                    let mensaje = "🏆 Top Puntuaciones:\n";
-                    for (let i = 0; i < puntajes.length; i++) {
-                        mensaje += `${i + 1}. ${puntajes[i].puntos} pts - ${puntajes[i].fecha}\n`;
-                    }
-                    alert(mensaje);
+                let mensaje = "🏆 Top Puntuaciones:\n\n";
+                puntajes.forEach((item, idx) => {
+                    mensaje += `${idx+1}. ${item.nombre}: ${item.puntos} pts - ${item.fecha}\n`;
+                });
+                alert(mensaje);
                 }
 
                 selecMenu = 0; // Regresa al menú principal después de mostrar
@@ -879,15 +878,17 @@ function manejarColisionConNave() {
     if (vidas <= 0) juegoTerminado = true;
 }
 function guardarPuntaje(puntos) {
-    let puntajes = JSON.parse(localStorage.getItem("puntajes")) || [];
-    let nuevo = {
-        puntos: puntos,
-        fecha: new Date().toLocaleDateString()
-    };
-    puntajes.push(nuevo);
-    puntajes.sort((a, b) => b.puntos - a.puntos);
-    puntajes = puntajes.slice(0, 5); // Solo top 5
-    localStorage.setItem("puntajes", JSON.stringify(puntajes));
+  let lista = JSON.parse(localStorage.getItem("puntajes")) || [];
+  let nombre = prompt("¡Partida terminada! Ingresa tu nombre para el ranking:");
+  if (!nombre) nombre = "Anon";
+  lista.push({
+    nombre: nombre,
+    puntos: puntos,
+    fecha: new Date().toLocaleDateString()
+  });
+  lista.sort((a,b) => b.puntos - a.puntos);
+  lista = lista.slice(0, 5);
+  localStorage.setItem("puntajes", JSON.stringify(lista));
 }
 function volverAlMenu() {
     menuActivo = true;
