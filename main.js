@@ -131,11 +131,7 @@ function draw() {
         tiempoTransicion--;
         if (tiempoTransicion <= 0) {
             enTransicion = false;
-            formacionCompletada = false;
-            ataqueIniciado = false;
-            enemigosAtacando = [];
-            tiempoParaAtaque = 100;
-            generarFormacion();
+            salirDeTransicion();            
         }
         return;
     }
@@ -302,6 +298,8 @@ function draw() {
         nivel++;
         enTransicion = true;
         tiempoTransicion = duracionTransicion;
+
+        intervaloAtaque = max(200, intervaloAtaque - 50);
     }
 
     for (let i = explosiones.length - 1; i >= 0; i--) {
@@ -426,13 +424,18 @@ function reiniciarJuego() {
 }
 
 function generarFormacionDinamita(){
-    let leader = new EnemigoResistente(200, 50, 50, 50, enemigoBImgs);
-    let miembros = [
-    new Enemigo(leader.x - 60, leader.y + 30, 40, leader.x - 60, leader.y + 30),
-    new Enemigo(leader.x + 60, leader.y + 30, 40, leader.x + 60, leader.y + 30),
-    new Enemigo(leader.x,       leader.y + 60, 40, leader.x,       leader.y + 60)
-  ];
-  gruposdinamita.push(new GrupoDinamita(leader, miembros));
+    let count = Math.floor((nivel - 1) / 3) + 1;
+    for (let k = 0; k < count; k++) {
+        let x0 = random(50, width - 50);
+        let y0 = random(-100, 0);
+        let leader = new EnemigoResistente(x0, y0, 50, 50, enemigoBImgs);
+        let miembros = [
+        new Enemigo(leader.x - 60, leader.y + 30, 40, leader.x - 60, leader.y + 30),
+        new Enemigo(leader.x + 60, leader.y + 30, 40, leader.x + 60, leader.y + 30),
+        new Enemigo(leader.x,       leader.y + 60, 40, leader.x,       leader.y + 60)
+    ];
+    gruposdinamita.push(new GrupoDinamita(leader, miembros));
+    }
 }
 
 function generarFormacion() {
@@ -449,6 +452,16 @@ function generarFormacion() {
             }
         }
     }
+}
+
+function salirDeTransicion(){
+    formacionCompletada = false;
+    ataqueIniciado = false;
+    enemigosAtacando = [];
+    tiempoParaAtaque = 100;
+    generarFormacion();
+    gruposdinamita = [];
+    generarFormacionDinamita();
 }
 
 class Nave {
