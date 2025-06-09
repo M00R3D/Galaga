@@ -312,57 +312,85 @@ function draw() {
         explosiones[i].mostrar();
         if (explosiones[i].terminada()) explosiones.splice(i, 1);
     }
-     if (nivel > 1 && formacionCompletada) {
+    if (nivel > 1 && formacionCompletada) {
         for (let e of enemigos) {
             if (random() < 0.004) {
-                proyectilesEnemigo.push(new ProyectilEnemigo(e.x, e.y + e.r));
+            proyectilesEnemigo.push(new ProyectilEnemigo(e.x, e.y + e.r));
             }
         }
-         for (let gdIndex = gruposdinamita.length - 1; gdIndex >= 0; gdIndex--) {
-            let grupo = gruposdinamita[gdIndex];
-            grupo.mover();
-            grupo.mostrar();
-            for (let i = proyectiles.length - 1; i >= 0; i--) {
-                let p = proyectiles[i];
-                if (grupo.leader.colisionaConProyectil(p)) {
-                proyectiles.splice(i, 1);
-                grupo.leader.health--;
-                if (grupo.leader.health <= 0) {
-                    crearExplosion(grupo.leader.x + grupo.leader.w/2, grupo.leader.y + grupo.leader.h/2);
-                    gruposdinamita.splice(gdIndex, 1);
-                    puntaje += 2;
-                }
-                break;
-                }
-                for (let mIndex = grupo.miembros.length - 1; mIndex >= 0; mIndex--) {
-                let miembro = grupo.miembros[mIndex];
-                if (miembro.colisionaConProyectil(p)) {
-                    proyectiles.splice(i, 1);
-                    crearExplosion(miembro.x + miembro.r, miembro.y + miembro.r);
-                    grupo.miembros.splice(mIndex, 1);
-                    puntaje++;
-                    break;
-                }
-                }
-            }
-            }
-    }
+        }
+    if (nivel > 1 && formacionCompletada) {
+    for (let gd = gruposdinamita.length - 1; gd >= 0; gd--) {
+        let grupo = gruposdinamita[gd];
+        grupo.mover();
+        grupo.mostrar();
 
+        // 1) Colisión líder contra fondo
+        if (grupo.leader.y > height) {
+        manejarColisionConNave();
+        gruposdinamita.splice(gd, 1);
+        continue;
+        }
+        // 2) Colisión miembros contra fondo
+        for (let m = grupo.miembros.length - 1; m >= 0; m--) {
+        if (grupo.miembros[m].y > height) {
+            manejarColisionConNave();
+            grupo.miembros.splice(m, 1);
+        }
+        }
+        // 3) Colisión líder vs nave
+        if (!naveDesaparecida && grupo.leader.colisionaConNave(nave)) {
+        manejarColisionConNave();
+        gruposdinamita.splice(gd, 1);
+        continue;
+        }
+        // 4) Colisión miembros vs nave
+        for (let m = grupo.miembros.length - 1; m >= 0; m--) {
+        if (!naveDesaparecida && grupo.miembros[m].colisionaConNave(nave)) {
+            manejarColisionConNave();
+            grupo.miembros.splice(m, 1);
+        }
+        }
+        // 5) Colisión disparos vs líder
+        for (let i = proyectiles.length - 1; i >= 0; i--) {
+        let p = proyectiles[i];
+        if (grupo.leader.colisionaConProyectil(p)) {
+            proyectiles.splice(i, 1);
+            grupo.leader.health--;
+            if (grupo.leader.health <= 0) {
+            crearExplosion(grupo.leader.x + grupo.leader.w/2, grupo.leader.y + grupo.leader.h/2);
+            gruposdinamita.splice(gd, 1);
+            puntaje += 2;
+            }
+            break;
+        }
+        }
+        // 6) Colisión disparos vs miembros
+        for (let m = grupo.miembros.length - 1; m >= 0; m--) {
+        for (let i = proyectiles.length - 1; i >= 0; i--) {
+            let p = proyectiles[i];
+            if (grupo.miembros[m].colisionaConProyectil(p)) {
+            proyectiles.splice(i, 1);
+            crearExplosion(grupo.miembros[m].x + grupo.miembros[m].r, grupo.miembros[m].y + grupo.miembros[m].r);
+            grupo.miembros.splice(m, 1);
+            puntaje++;
+            break;
+            }
+        }
+        }
+    }
+    }
     for (let i = proyectilesEnemigo.length - 1; i >= 0; i--) {
         let pe = proyectilesEnemigo[i];
         pe.mover();
         pe.mostrar();
         if (pe.y > height) {
             proyectilesEnemigo.splice(i, 1);
-            continue;
+        } else if (nave && pe.colisionaConNave(nave)) {
+            proyectilesEnemigo.splice(i, 1);
+            manejarColisionConNave();
         }
-        if (nave && pe.colisionaConNave(nave)) 
-            {
-                proyectilesEnemigo.splice(i, 1);
-                if (!naveDesaparecida) manejarColisionConNave();
-            }
-
-    }
+        }
 }
 function keyPressed() {
     if (menuActivo) 
@@ -601,6 +629,12 @@ class EnemigoResistente {
                this.y < p.y + p.h &&
                this.y + this.h > p.y;
     }
+    colisionaConNave(nave) {
+    return this.x < nave.x + nave.w &&
+           this.x + this.w > nave.x &&
+           this.y < nave.y + nave.h &&
+           this.y + this.h > nave.y;
+  }
 }
 class GrupoDinamita {
   constructor(leader, miembros) {
