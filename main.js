@@ -213,21 +213,22 @@ function draw() {
         }
     }
 
-
-    for (let i = somoslosjefes.length - 1; i >= 0; i--) {
-    let er = somoslosjefes[i];
-    er.mover();
-    er.mostrar();
-        for (let j = proyectiles.length - 1; j >= 0; j--) {
-            if (er.colisionaConProyectil(proyectiles[j])) {
-                proyectiles.splice(j, 1);
-                er.health--;
-                if (er.health <= 0) {
-                    crearExplosion(er.x + er.w/2, er.y + er.h/2);
-                    somoslosjefes.splice(i, 1);
-                    puntaje += 2;
+    if(somoslosjefes!=[]){
+        for (let i = somoslosjefes.length - 1; i >= 0; i--) {
+        let er = somoslosjefes[i];
+        er.mover();
+        er.mostrar();
+            for (let j = proyectiles.length - 1; j >= 0; j--) {
+                if (er.colisionaConProyectil(proyectiles[j]) && nivel===3) {
+                    proyectiles.splice(j, 1);
+                    er.health--;
+                    if (er.health <= 0) {
+                        crearExplosion(er.x + er.w/2, er.y + er.h/2);
+                        somoslosjefes.splice(i, 1);
+                        puntaje += 2;
+                    }
+                    break;
                 }
-                break;
             }
         }
     }
@@ -421,6 +422,7 @@ function reiniciarJuego() {
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
     generarFormacion();
     generarFormacionDinamita()
+    somoslosjefes=[(new Jefe(300, 50, 150, 150, jefeImgs))];
 }
 
 function generarFormacionDinamita(){
@@ -630,19 +632,25 @@ class Jefe {
         this.c = 6;
     }
     mover() {
-        this.cycleCount++;
-        if (this.cycleCount % 60 === 0) this.vx = -this.vx;
-        // this.x += this.vx;
-        this.y += this.vy;
-        this.x = constrain(this.x, 0, width - this.w);
-        if (this.c > 0) this.c--;
-        else {
-            this.c = 6;
-            this.frame = (this.frame + 1) % this.imgs.length;
+        if(nivel==3)
+        {
+            this.cycleCount++;
+            if (this.cycleCount % 60 === 0) this.vx = -this.vx;
+            // this.x += this.vx;
+            this.y += this.vy;
+            this.x = constrain(this.x, 0, width - this.w);
+            if (this.c > 0) this.c--;
+            else {
+                this.c = 6;
+                this.frame = (this.frame + 1) % this.imgs.length;
+            }
         }
     }
     mostrar() {
-        image(this.imgs[this.frame], this.x, this.y, this.w, this.h);
+        if(nivel==3)
+        {
+            image(this.imgs[this.frame], this.x, this.y, this.w, this.h);
+        }
     }
     colisionaConProyectil(p) {
         return this.x < p.x + p.w &&
