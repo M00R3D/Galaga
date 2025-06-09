@@ -1,5 +1,3 @@
-// guia de animaciones del jefe, 0-4 caminando,  4-11 mordiendo  11-16 parpadeando
-
 let nave;
 let imgNave, imgNave2;
 let c = 6;
@@ -141,8 +139,12 @@ function draw() {
         textSize(64);
         textAlign(CENTER, CENTER);
         text("Juego Terminado", width / 2, height / 2);
+        textSize(24);
+        fill(255);
+        text("Presiona R para volver al menú", width / 2, height / 2 + 60);
         return;
     }
+
 
     fill(255);
     textSize(32);
@@ -150,6 +152,10 @@ function draw() {
     text("Puntaje: " + puntaje, 20, 20);
     text("Vidas: " + vidas, 20, 60);
     text("nivel:" + nivel, 20, 100);
+    if (vidas <= 0 && !juegoTerminado) {
+        juegoTerminado = true;
+        guardarPuntaje(puntaje); // 👈 Se guarda el puntaje final
+    }
 
     if (!naveDesaparecida && nave) {
         nave.mover();
@@ -393,13 +399,30 @@ function draw() {
         }
 }
 function keyPressed() {
+     if (juegoTerminado && key === 'r') {
+        volverAlMenu();
+    }
     if (menuActivo) 
     {
         if(key === 'p' || key ==='P')
         {
             if(selecMenu==0){menuActivo = false;}
-            if(selecMenu==1){menuActivo = false;}
-            if(selecMenu==2){menuActivo = false;}
+            if (selecMenu == 1) {
+                let puntajes = JSON.parse(localStorage.getItem("puntajes")) || [];
+                
+                if (puntajes.length === 0) {
+                    alert("Aún no hay puntuaciones registradas.");
+                } else {
+                    let mensaje = "🏆 Top Puntuaciones:\n";
+                    for (let i = 0; i < puntajes.length; i++) {
+                        mensaje += `${i + 1}. ${puntajes[i].puntos} pts - ${puntajes[i].fecha}\n`;
+                    }
+                    alert(mensaje);
+                }
+
+                selecMenu = 0; // Regresa al menú principal después de mostrar
+            }
+            if(selecMenu==2){window.close();}
             // return;
         }
 
@@ -547,10 +570,11 @@ class ProyectilEnemigo {
     }
 
     colisionaConNave(nave) {
-        return (this.x < nave.x + nave.w &&
+        if(!naveDesaparecida)
+        {return (this.x < nave.x + nave.w &&
                 this.x + this.w > nave.x &&
                 this.y < nave.y + nave.h &&
-                this.y + this.h > nave.y);
+                this.y + this.h > nave.y)};
     }
 }
 class Enemigo {
@@ -585,8 +609,8 @@ class Enemigo {
     }
 
     colisionaConNave(n) {
-        return this.x + this.r > n.x && this.x - this.r < n.x + n.w &&
-               this.y + this.r > n.y && this.y - this.r < n.y + n.h;
+        if(!naveDesaparecida){return this.x + this.r > n.x && this.x - this.r < n.x + n.w &&
+               this.y + this.r > n.y && this.y - this.r < n.y + n.h;}
     }
 
     colisionaConProyectil(p) {
@@ -630,10 +654,10 @@ class EnemigoResistente {
                this.y + this.h > p.y;
     }
     colisionaConNave(nave) {
-    return this.x < nave.x + nave.w &&
+    if(!naveDesaparecida){return this.x < nave.x + nave.w &&
            this.x + this.w > nave.x &&
            this.y < nave.y + nave.h &&
-           this.y + this.h > nave.y;
+           this.y + this.h > nave.y;}
   }
 }
 class GrupoDinamita {
@@ -815,8 +839,43 @@ async function loadImageAsync(src) {
 
 function manejarColisionConNave() {
     crearExplosion(nave.x + nave.w / 2, nave.y + nave.h / 2);
-    if (!naveDesaparecida) vidas--;
     naveDesaparecida = true;
+    if (!naveDesaparecida) vidas--;
     tiempoRespawn = millis() + 2000;
+    if (vidas > 0){vidas--}
     if (vidas <= 0) juegoTerminado = true;
+}
+function guardarPuntaje(puntos) {
+    let puntajes = JSON.parse(localStorage.getItem("puntajes")) || [];
+    let nuevo = {
+        puntos: puntos,
+        fecha: new Date().toLocaleDateString()
+    };
+    puntajes.push(nuevo);
+    puntajes.sort((a, b) => b.puntos - a.puntos);
+    puntajes = puntajes.slice(0, 5); // Solo top 5
+    localStorage.setItem("puntajes", JSON.stringify(puntajes));
+}
+function volverAlMenu() {
+    menuActivo = true;
+    juegoTerminado = false;
+    vidas = 3;
+    puntaje = 0;
+    nivel = 1;
+    proyectiles = [];
+    enemigos = [];
+    enemigosResistentes = [];
+    somoslosjefes[0].health = 50;
+    somoslosjefes[0].visible = false;
+    formacionCompletada = false;
+    ataqueIniciado = false;
+    proyectilesEnemigo = [];
+    explosiones = [];
+    naveDesaparecida = false;
+    tiempoRespawn = 0;
+    tiempoUltimoDisparo = 0;
+    selecMenu = 0;
+    generarFormacion();
+    generarFormacionDinamita();
+    nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
 }
