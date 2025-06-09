@@ -218,34 +218,7 @@ function draw() {
         }
     }
 
- for (let gdIndex = gruposdinamita.length - 1; gdIndex >= 0; gdIndex--) {
-  let grupo = gruposdinamita[gdIndex];
-  grupo.mover();
-  grupo.mostrar();
-  for (let i = proyectiles.length - 1; i >= 0; i--) {
-    let p = proyectiles[i];
-    if (grupo.leader.colisionaConProyectil(p)) {
-      proyectiles.splice(i, 1);
-      grupo.leader.health--;
-      if (grupo.leader.health <= 0) {
-        crearExplosion(grupo.leader.x + grupo.leader.w/2, grupo.leader.y + grupo.leader.h/2);
-        gruposdinamita.splice(gdIndex, 1);
-        puntaje += 2;
-      }
-      break;
-    }
-    for (let mIndex = grupo.miembros.length - 1; mIndex >= 0; mIndex--) {
-      let miembro = grupo.miembros[mIndex];
-      if (miembro.colisionaConProyectil(p)) {
-        proyectiles.splice(i, 1);
-        crearExplosion(miembro.x + miembro.r, miembro.y + miembro.r);
-        grupo.miembros.splice(mIndex, 1);
-        puntaje++;
-        break;
-      }
-    }
-  }
-}
+
     for (let i = somoslosjefes.length - 1; i >= 0; i--) {
     let er = somoslosjefes[i];
     er.mover();
@@ -340,12 +313,40 @@ function draw() {
         explosiones[i].mostrar();
         if (explosiones[i].terminada()) explosiones.splice(i, 1);
     }
-     if (nivel === 2 && formacionCompletada) {
+     if (nivel > 1 && formacionCompletada) {
         for (let e of enemigos) {
             if (random() < 0.004) {
                 proyectilesEnemigo.push(new ProyectilEnemigo(e.x, e.y + e.r));
             }
         }
+         for (let gdIndex = gruposdinamita.length - 1; gdIndex >= 0; gdIndex--) {
+            let grupo = gruposdinamita[gdIndex];
+            grupo.mover();
+            grupo.mostrar();
+            for (let i = proyectiles.length - 1; i >= 0; i--) {
+                let p = proyectiles[i];
+                if (grupo.leader.colisionaConProyectil(p)) {
+                proyectiles.splice(i, 1);
+                grupo.leader.health--;
+                if (grupo.leader.health <= 0) {
+                    crearExplosion(grupo.leader.x + grupo.leader.w/2, grupo.leader.y + grupo.leader.h/2);
+                    gruposdinamita.splice(gdIndex, 1);
+                    puntaje += 2;
+                }
+                break;
+                }
+                for (let mIndex = grupo.miembros.length - 1; mIndex >= 0; mIndex--) {
+                let miembro = grupo.miembros[mIndex];
+                if (miembro.colisionaConProyectil(p)) {
+                    proyectiles.splice(i, 1);
+                    crearExplosion(miembro.x + miembro.r, miembro.y + miembro.r);
+                    grupo.miembros.splice(mIndex, 1);
+                    puntaje++;
+                    break;
+                }
+                }
+            }
+            }
     }
 
     for (let i = proyectilesEnemigo.length - 1; i >= 0; i--) {
