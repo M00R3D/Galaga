@@ -630,40 +630,98 @@ class Jefe {
         this.imgs = imgs;
         this.health = 10;
         this.vx = 3;
-        this.vy = 1.2;
         this.cycleCount = 0;
         this.frame = 0;
         this.c = 6;
-        this.visible=false;
+        this.visible = false;
+
+        this.proyectiles = [];
     }
+
     mover() {
-        if(nivel==3)
-        {
+        if (nivel == 3 && this.visible) {
             this.cycleCount++;
-            if (this.cycleCount % 60 === 0) this.vx = -this.vx;
-            // this.x += this.vx;
-            this.y += this.vy;
+
+            // Movimiento horizontal alternando dirección cada 60 frames
+            if (this.cycleCount % 60 === 0) {
+                this.vx *= -1;
+            }
+            this.x += this.vx;
             this.x = constrain(this.x, 0, width - this.w);
+
+            // Movimiento vertical (baja cada 2 segundos)
+            if (this.cycleCount % 120 === 0) {
+                this.y += 10;
+            }
+
+            // Disparo de proyectiles cada 3 segundos
+            if (this.cycleCount % 180 === 0) {
+                this.lanzarProyectiles();
+            }
+
+            // Animación básica
             if (this.c > 0) this.c--;
             else {
                 this.c = 6;
                 this.frame = (this.frame + 1) % this.imgs.length;
             }
+
+            // Actualizar proyectiles del jefe
+            for (let p of this.proyectiles) {
+                p.mover();
+            }
+
+            // Limpiar proyectiles que salieron de pantalla
+            this.proyectiles = this.proyectiles.filter(p => p.y < height);
         }
     }
+
     mostrar() {
-        if(nivel==3 && this.visible==true)
-        {
+        if (nivel == 3 && this.visible) {
             image(this.imgs[this.frame], this.x, this.y, this.w, this.h);
+
+            // Mostrar los proyectiles del jefe
+            for (let p of this.proyectiles) {
+                p.mostrar();
+            }
         }
     }
+
     colisionaConProyectil(p) {
-        if(nivel==3 && this.health>0){return this.x < p.x + p.w &&
-               this.x + this.w > p.x &&
-               this.y < p.y + p.h &&
-               this.y + this.h > p.y;}
+        if (nivel == 3 && this.health > 0) {
+            return this.x < p.x + p.w &&
+                this.x + this.w > p.x &&
+                this.y < p.y + p.h &&
+                this.y + this.h > p.y;
+        }
+        return false;
+    }
+
+    lanzarProyectiles() {
+        let cantidad = int(random(6, 9));
+        for (let i = 0; i < cantidad; i++) {
+            let px = this.x + this.w / 2 + random(-this.w / 3, this.w / 3);
+            let py = this.y + this.h;
+            let p = new ProyectilEnemigo(px, py);
+            p.vx = random(-1, 1);         // Dispersión leve
+            p.vy = random(3, 5);          // Solo hacia abajo
+
+            // Sobrescribir mover y mostrar del proyectil enemigo
+            p.mover = function () {
+                this.x += this.vx;
+                this.y += this.vy;
+            };
+            p.mostrar = function () {
+                fill(255, 100, 100);
+                noStroke();
+                ellipse(this.x, this.y, this.w, this.h);
+            };
+
+            this.proyectiles.push(p);
+        }
     }
 }
+
 
 class Particula {
     constructor(x, y) {
