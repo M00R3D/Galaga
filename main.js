@@ -172,7 +172,6 @@ function draw() {
         naveDesaparecida = false;
         nave = new Nave(-100, height - 100, 60, 64, imgNave);
     }
-
     if (c > 0) c--;
     else {
         c = 6;
@@ -193,8 +192,10 @@ function draw() {
     }
     for (let i = enemigosResistentes.length - 1; i >= 0; i--) {
     let er = enemigosResistentes[i];
-    er.mover();
-    er.mostrar();
+    if (er.visible) {
+        er.mover();
+        er.mostrar();
+    }
         for (let j = proyectiles.length - 1; j >= 0; j--) {
             if (er.colisionaConProyectil(proyectiles[j])) {
                 proyectiles.splice(j, 1);
@@ -202,6 +203,7 @@ function draw() {
                 if (er.health <= 0) {
                     crearExplosion(er.x + er.w/2, er.y + er.h/2);
                     enemigosResistentes.splice(i, 1);
+
                     puntaje += 2;
                 }
                 break;
@@ -209,6 +211,7 @@ function draw() {
         }
     }
 
+    if(nivel==3 && somoslosjefes[0].visible==false && somoslosjefes[0].health>0){somoslosjefes[0].visible=true;}
     if(somoslosjefes!=[]){
         for (let i = somoslosjefes.length - 1; i >= 0; i--) {
         let er = somoslosjefes[i];
@@ -220,7 +223,9 @@ function draw() {
                     er.health--;
                     if (er.health <= 0) {
                         crearExplosion(er.x + er.w/2, er.y + er.h/2);
-                        somoslosjefes.splice(i, 1);
+                        // somoslosjefes.splice(i, 1);
+                        er.visible = false;
+                        er.y=50;
                         puntaje += 2;
                     }
                     break;
@@ -359,16 +364,7 @@ function draw() {
 
     }
 }
-
 function keyPressed() {
-    // if (key === ' ' && nave && !naveDesaparecida) {
-    //     let ahora = millis();
-    //     if (ahora - tiempoUltimoDisparo >= cooldownDisparo) {
-    //         let nuevo = new Proyectil(nave.x + nave.w / 2 - 10, nave.y);
-    //         proyectiles.push(nuevo);
-    //         tiempoUltimoDisparo = ahora;
-    //     }
-    // }
     if (menuActivo) 
     {
         if(key === 'p' || key ==='P')
@@ -380,16 +376,9 @@ function keyPressed() {
         }
 
         if(key === 'w' || key ==='W')
-        {
-            if(selecMenu>0){selecMenu--;}else{selecMenu=2;}
-            // return;
-        }
-
+        {if(selecMenu>0){selecMenu--;}else{selecMenu=2;}}
         if(key === 's' || key ==='S')
-        {
-            if(selecMenu<2){selecMenu++;}else{selecMenu=0;}
-            // return;
-        }
+        {if(selecMenu<2){selecMenu++;}else{selecMenu=0;}}
     }
     if ((key === 'r' || key === 'R') && juegoTerminado) reiniciarJuego();
 }
@@ -420,7 +409,9 @@ function reiniciarJuego() {
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
     generarFormacion();
     generarFormacionDinamita()
-    somoslosjefes=[(new Jefe(300, 50, 150, 150, jefeImgs))];
+    somoslosjefes[0].health = 10;
+    somoslosjefes[0].visible = false;
+    somoslosjefes[0].y = 0;
 }
 
 function generarFormacionDinamita(){
@@ -643,6 +634,7 @@ class Jefe {
         this.cycleCount = 0;
         this.frame = 0;
         this.c = 6;
+        this.visible=false;
     }
     mover() {
         if(nivel==3)
@@ -660,16 +652,16 @@ class Jefe {
         }
     }
     mostrar() {
-        if(nivel==3)
+        if(nivel==3 && this.visible==true)
         {
             image(this.imgs[this.frame], this.x, this.y, this.w, this.h);
         }
     }
     colisionaConProyectil(p) {
-        return this.x < p.x + p.w &&
+        if(nivel==3 && this.health>0){return this.x < p.x + p.w &&
                this.x + this.w > p.x &&
                this.y < p.y + p.h &&
-               this.y + this.h > p.y;
+               this.y + this.h > p.y;}
     }
 }
 
