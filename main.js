@@ -42,10 +42,14 @@ let puntajeGuardado = false;
 let musicaCargada = false;
 
 let juegoGanado = false;
+let sonidoDisparo;
+let sonidoExplosion;
 
 async function setup() {
     createCanvas(1240, 760);
     
+    sonidoDisparo = loadSound('sonidos/disparo.mp3');
+    sonidoExplosion = loadSound('sonidos/explosion.mp3'); 
     let jefeImgs = [];
     imgNave = await loadImageAsync('recursos/nave1.png');
     imgNave2 = await loadImageAsync('recursos/nave2.png');
@@ -214,6 +218,7 @@ function draw() {
             let ahora = millis();
             if (ahora - tiempoUltimoDisparo >= cooldownDisparo) 
                 {
+                sonidoDisparo.play();
                 let nuevo = new Proyectil(nave.x + nave.w / 2 - 10, nave.y);
                 proyectiles.push(nuevo);
                 tiempoUltimoDisparo = ahora;
@@ -916,6 +921,8 @@ class Explosion {
 
 function crearExplosion(x, y) {
     explosiones.push(new Explosion(x, y));
+    sonidoExplosion.play();
+
 }
 
 async function loadImageAsync(src) {
