@@ -39,6 +39,8 @@ let time = 0;
 let selecMenu=0;
 let enemigoBImgs = [];
 let puntajeGuardado = false;
+let musicaCargada = false;
+
 let juegoGanado = false;
 
 async function setup() {
@@ -207,7 +209,7 @@ function draw() {
         nave.mover();
         nave.mostrar();
 
-        if (keyIsDown(' ') && nave && !naveDesaparecida)
+        if (keyIsDown(32) && nave && !naveDesaparecida)
         {
             let ahora = millis();
             if (ahora - tiempoUltimoDisparo >= cooldownDisparo) 
@@ -462,19 +464,30 @@ function draw() {
 
 }
 function keyPressed() {
-    if (juegoTerminado&& key === 'r') {
+
+    if (juegoTerminado&& keyIsDown (82) ){
         volverAlMenu();
     }
-    if (juegoGanado && key === 'r') {
+    if (juegoGanado && keyIsDown (82) ){
         location.reload();
     }
 
     if (menuActivo) 
     {
-        if(key === 'p' || key ==='P')
+        if(keyIsDown(80))
         {
-            if(selecMenu==0){menuActivo = false;}
-            if (menuActivo && (key === 'p' || key === 'P') && selecMenu === 1) {
+            if(selecMenu==0){
+                menuActivo = false;
+                if (musicaFondo && !musicaFondo.isPlaying()) {
+                    getAudioContext().resume().then(() => {
+                        musicaFondo.loop();
+                        musicaFondo.setVolume(0.5);
+                    }).catch(err => {
+                        console.log("Error de audio:", err);
+                    });
+                }
+            }
+            if (menuActivo && (keyIsDown (80)) && selecMenu === 1) {
                 let puntajes = JSON.parse(localStorage.getItem("puntajes")) || [];
                 if (puntajes.length === 0) {
                 alert("Aún no hay puntuaciones registradas.");
@@ -492,12 +505,12 @@ function keyPressed() {
             // return;
         }
 
-        if(key === 'w' || key ==='W')
+        if(keyIsDown( 87))
         {if(selecMenu>0){selecMenu--;}else{selecMenu=2;}}
-        if(key === 's' || key ==='S')
+        if(keyIsDown(83))
         {if(selecMenu<2){selecMenu++;}else{selecMenu=0;}}
     }
-    if ((key === 'r' || key === 'R') && juegoTerminado) reiniciarJuego();
+    if ((keyIsDown( 82)) && juegoTerminado) reiniciarJuego();
 }
 function fondoEstrellado() {
     noStroke();
@@ -583,9 +596,9 @@ class Nave {
     }
 
     mover() {
-        if (keyIsDown('a') && keyIsDown('d')) return;
-        if (keyIsDown('a')) this.x -= 10;
-        else if (keyIsDown('d')) this.x += 10;
+        if (keyIsDown(65) && keyIsDown(68)) return;
+        if (keyIsDown('65')) this.x -= 10;
+        else if (keyIsDown('68')) this.x += 10;
         this.x = constrain(this.x, 0, width - this.w);
     }
 
@@ -953,6 +966,23 @@ function volverAlMenu() {
     generarFormacion();
     generarFormacionDinamita();
     nave = new Nave(width / 2, height - 100, 60, 64, imgNave);
+}
+function preload() {
+  try {
+    musicaFondo = loadSound('recursos/musica.mp3', 
+      () => {
+        console.log('Música cargada correctamente');
+        musicaCargada = true;
+      }, 
+      (err) => {
+        console.error('Error al cargar la música:', err);
+        musicaCargada = false;
+      }
+    );
+  } catch (e) {
+    console.error('Error en preload:', e);
+    musicaCargada = false;
+  }
 }
 function colisionRectangular(a, b) {
     return (
